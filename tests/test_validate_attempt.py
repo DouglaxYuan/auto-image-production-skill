@@ -205,6 +205,28 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest path must not be a symlink:", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_rejects_manifest_parent_symlink_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            real_root = self.attempt_root(tmp)
+            manifest_path = self.write_manifest(real_root, self.valid_manifest(real_root))
+            link_root = Path(tmp) / "attempt-link"
+            try:
+                link_root.symlink_to(real_root)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"symlink unsupported: {exc}")
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(link_root / manifest_path.name)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest parent directory must not be a symlink:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)

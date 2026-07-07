@@ -129,6 +129,16 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         errors.append(f"manifest parent directory is invalid: {path.parent} ({exc})")
         return errors
 
+    try:
+        parent_is_symlink = path.parent.is_symlink()
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(f"manifest parent directory is invalid: {path.parent} ({exc})")
+        return errors
+
+    if parent_is_symlink:
+        errors.append(f"manifest parent directory must not be a symlink: {path.parent}")
+        return errors
+
     data = _load_manifest(path, errors)
     if data is None:
         return errors
