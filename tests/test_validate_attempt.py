@@ -589,6 +589,21 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate path must not contain parent directory references: nested/../candidate-a.png", errors)
 
+    def test_candidate_paths_must_not_contain_windows_parent_references(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = "nested\\..\\candidate-a.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "candidate path must not contain parent directory references: "
+            "nested\\..\\candidate-a.png",
+            errors,
+        )
+
     def test_candidate_path_with_invalid_filesystem_characters_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -776,6 +791,21 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertIn("selected_path must not contain parent directory references: nested/../candidate-b.png", errors)
+
+    def test_selected_path_must_not_contain_windows_parent_references(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["selected_path"] = "nested\\..\\candidate-b.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "selected_path must not contain parent directory references: "
+            "nested\\..\\candidate-b.png",
+            errors,
+        )
 
     def test_selected_path_must_be_a_file(self):
         with tempfile.TemporaryDirectory() as tmp:

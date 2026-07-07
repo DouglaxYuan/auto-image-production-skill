@@ -113,7 +113,7 @@ def _attempt_path_segments(relative_path: str) -> list[str]:
 
 
 def _attempt_path_has_parent_reference(relative_path: str, label: str, errors: list[str]) -> bool:
-    if ".." in Path(relative_path).parts:
+    if ".." in _attempt_path_segments(relative_path):
         errors.append(f"{label} must not contain parent directory references: {relative_path}")
         return True
     return False
