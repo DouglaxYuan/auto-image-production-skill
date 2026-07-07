@@ -50,6 +50,15 @@ def _item_dir_name(manifest_path: Path) -> str | None:
     return attempt_parent.parent.name
 
 
+def _resolve_attempt_path(attempt_root: Path, relative_path: str, label: str, errors: list[str]) -> Path | None:
+    try:
+        resolved = (attempt_root / relative_path).resolve()
+    except (OSError, ValueError) as exc:
+        errors.append(f"{label} is invalid: {relative_path} ({exc})")
+        return None
+    return resolved
+
+
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
     if not manifest_path.exists():
         errors.append(f"manifest does not exist: {manifest_path}")
@@ -138,8 +147,9 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
         if resolved.is_absolute():
             errors.append(f"candidate path must be relative: {candidate_path}")
             continue
-        resolved = path.parent / resolved
-        resolved = resolved.resolve()
+        resolved = _resolve_attempt_path(attempt_root, candidate_path, "candidate path", errors)
+        if resolved is None:
+            continue
         if not _is_relative_to(resolved, attempt_root):
             errors.append(f"candidate path escapes attempt directory: {candidate_path}")
             continue
@@ -163,12 +173,14 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
             if resolved_selected.is_absolute():
                 errors.append(f"selected_path must be relative: {selected_path}")
             else:
-                resolved_selected = path.parent / resolved_selected
-                resolved_selected = resolved_selected.resolve()
-                if not _is_relative_to(resolved_selected, attempt_root):
-                    errors.append(f"selected_path escapes attempt directory: {selected_path}")
-                elif resolved_selected not in resolved_candidate_paths:
-                    errors.append(f"selected_path is not listed in candidates: {selected_path}")
+                resolved_selected = _resolve_attempt_path(
+                    attempt_root, selected_path, "selected_path", errors
+                )
+                if resolved_selected is not None:
+                    if not _is_relative_to(resolved_selected, attempt_root):
+                        errors.append(f"selected_path escapes attempt directory: {selected_path}")
+                    elif resolved_selected not in resolved_candidate_paths:
+                        errors.append(f"selected_path is not listed in candidates: {selected_path}")
 
     return errors
 

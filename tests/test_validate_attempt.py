@@ -233,6 +233,25 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate path escapes attempt directory: ../outside.png", errors)
 
+    def test_candidate_path_with_invalid_filesystem_characters_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = "bad\x00name.png"
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("candidate path is invalid: bad", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_candidate_paths_must_be_unique_after_resolution(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -268,6 +287,25 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertIn(f"selected_path must be relative: {absolute_path}", errors)
+
+    def test_selected_path_with_invalid_filesystem_characters_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["selected_path"] = "bad\x00name.png"
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("selected_path is invalid: bad", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
 
     def test_selected_path_must_reference_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
