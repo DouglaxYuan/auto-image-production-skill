@@ -823,6 +823,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors,
         )
 
+    def test_candidate_paths_must_not_start_with_current_directory_references(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = "./candidate-a.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "candidate path must not contain current directory references: ./candidate-a.png",
+            errors,
+        )
+
     def test_candidate_paths_must_not_contain_repeated_separators(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -1039,17 +1053,17 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors,
         )
 
-    def test_candidate_paths_must_be_unique_after_resolution(self):
+    def test_candidate_paths_must_be_unique(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
-            data["candidates"][1]["path"] = "./candidate-a.png"
+            data["candidates"][1]["path"] = "candidate-a.png"
             data["selected_path"] = "candidate-a.png"
             manifest_path = self.write_manifest(root, data)
 
             errors = validate_manifest(manifest_path)
 
-        self.assertIn("duplicate candidate path: ./candidate-a.png", errors)
+        self.assertIn("duplicate candidate path: candidate-a.png", errors)
 
     def test_candidate_task_id_must_be_non_empty_string_when_present(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1124,21 +1138,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
-            data["candidates"][1]["path"] = "./candidate-a.png"
+            data["candidates"][1]["path"] = "candidate-a.png"
             data["candidates"][1]["task_id"] = "ASSET-0001-A999"
             data["selected_path"] = "candidate-a.png"
             manifest_path = self.write_manifest(root, data)
 
             errors = validate_manifest(manifest_path)
 
-        self.assertIn("duplicate candidate path: ./candidate-a.png", errors)
+        self.assertIn("duplicate candidate path: candidate-a.png", errors)
         self.assertIn("candidate 2 task_id does not match manifest task_id", errors)
 
-    def test_selected_path_matches_candidate_after_resolution(self):
+    def test_selected_path_matches_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
-            data["candidates"][1]["path"] = "./candidate-b.png"
             data["selected_path"] = "candidate-b.png"
             manifest_path = self.write_manifest(root, data)
 
@@ -1201,6 +1214,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn(
             "selected_path must not contain current directory references: candidate-b.png/.",
+            errors,
+        )
+
+    def test_selected_path_must_not_start_with_current_directory_references(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["selected_path"] = "./candidate-b.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "selected_path must not contain current directory references: ./candidate-b.png",
             errors,
         )
 

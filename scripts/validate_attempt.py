@@ -191,7 +191,7 @@ def _attempt_path_has_current_directory_reference(
     relative_path: str, label: str, errors: list[str]
 ) -> bool:
     segments = _attempt_path_segments(relative_path)
-    if segments == ["."] or "." in segments[1:]:
+    if "." in segments:
         errors.append(f"{label} must not contain current directory references: {relative_path}")
         return True
     return False
