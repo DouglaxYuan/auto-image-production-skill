@@ -461,6 +461,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             ("attempt_id", "A-0001-001\nextra"),
             ("task_id", "ASSET-0001-A001\nextra"),
             ("provider", "browser\nimage tool"),
+            ("provider", "browser\x00image tool"),
         )
         for field, value in cases:
             with self.subTest(field=field):
@@ -806,7 +807,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode)
         self.assertEqual("", result.stdout.strip())
-        self.assertIn("candidate path is invalid: bad", result.stderr)
+        self.assertIn("candidate path must not contain control characters", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
     def test_candidate_path_symlink_loop_is_reported(self):
@@ -925,6 +926,17 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             "candidate 1 task_id must not have leading or trailing whitespace",
             errors,
         )
+
+    def test_candidate_task_id_must_not_contain_nul(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["task_id"] = "ASSET-0001-A001\x00"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate 1 task_id must not contain control characters", errors)
 
     def test_candidate_task_id_mismatch_is_reported_when_path_duplicates(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1131,7 +1143,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode)
         self.assertEqual("", result.stdout.strip())
-        self.assertIn("selected_path is invalid: bad", result.stderr)
+        self.assertIn("selected_path must not contain control characters", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
     def test_selected_path_symlink_loop_is_reported(self):
