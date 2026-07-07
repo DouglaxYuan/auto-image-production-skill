@@ -49,6 +49,10 @@ def _binding_references_task(binding: Any, task_id: str) -> bool:
     return False
 
 
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"invalid JSON constant: {value}")
+
+
 def _is_relative_to(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -152,7 +156,10 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
         return None
 
     try:
-        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        data = json.loads(
+            manifest_path.read_text(encoding="utf-8"),
+            parse_constant=_reject_json_constant,
+        )
     except OSError as exc:
         errors.append(f"manifest could not be read: {exc}")
         return None
@@ -163,6 +170,9 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
         errors.append(f"manifest is too deeply nested: {exc}")
         return None
     except json.JSONDecodeError as exc:
+        errors.append(f"manifest is not valid JSON: {exc}")
+        return None
+    except ValueError as exc:
         errors.append(f"manifest is not valid JSON: {exc}")
         return None
 
