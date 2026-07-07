@@ -76,6 +76,18 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate path does not exist: candidate-a.png", errors)
 
+    def test_candidate_paths_must_be_relative(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = self.valid_manifest(root)
+            absolute_path = root / "candidate-a.png"
+            data["candidates"][0]["path"] = str(absolute_path)
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(f"candidate path must be relative: {absolute_path}", errors)
+
     def test_candidate_paths_must_stay_inside_attempt_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -114,6 +126,18 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertEqual([], errors)
+
+    def test_selected_path_must_be_relative(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = self.valid_manifest(root)
+            absolute_path = root / "candidate-b.png"
+            data["selected_path"] = str(absolute_path)
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(f"selected_path must be relative: {absolute_path}", errors)
 
     def test_selected_path_must_reference_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:

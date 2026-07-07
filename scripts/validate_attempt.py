@@ -106,8 +106,10 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
             continue
 
         resolved = Path(candidate_path)
-        if not resolved.is_absolute():
-            resolved = path.parent / resolved
+        if resolved.is_absolute():
+            errors.append(f"candidate path must be relative: {candidate_path}")
+            continue
+        resolved = path.parent / resolved
         resolved = resolved.resolve()
         if not _is_relative_to(resolved, attempt_root):
             errors.append(f"candidate path escapes attempt directory: {candidate_path}")
@@ -129,13 +131,15 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
             errors.append("selected_path must be a non-empty string when present")
         else:
             resolved_selected = Path(selected_path)
-            if not resolved_selected.is_absolute():
+            if resolved_selected.is_absolute():
+                errors.append(f"selected_path must be relative: {selected_path}")
+            else:
                 resolved_selected = path.parent / resolved_selected
-            resolved_selected = resolved_selected.resolve()
-            if not _is_relative_to(resolved_selected, attempt_root):
-                errors.append(f"selected_path escapes attempt directory: {selected_path}")
-            elif resolved_selected not in resolved_candidate_paths:
-                errors.append(f"selected_path is not listed in candidates: {selected_path}")
+                resolved_selected = resolved_selected.resolve()
+                if not _is_relative_to(resolved_selected, attempt_root):
+                    errors.append(f"selected_path escapes attempt directory: {selected_path}")
+                elif resolved_selected not in resolved_candidate_paths:
+                    errors.append(f"selected_path is not listed in candidates: {selected_path}")
 
     return errors
 
