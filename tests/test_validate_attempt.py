@@ -604,6 +604,19 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors,
         )
 
+    def test_candidate_paths_must_use_forward_slashes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            backslash_path = "generated\\candidate-a.png"
+            (root / backslash_path).write_bytes(b"png-a")
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = backslash_path
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(f"candidate path must use forward slashes: {backslash_path}", errors)
+
     def test_candidate_path_with_invalid_filesystem_characters_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -806,6 +819,21 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             "nested\\..\\candidate-b.png",
             errors,
         )
+
+    def test_selected_path_must_use_forward_slashes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            backslash_path = "generated\\candidate-target.png"
+            (root / backslash_path).write_bytes(b"png-target")
+            data = self.valid_manifest(root)
+            data["candidates"].append({"path": backslash_path, "task_id": "ASSET-0001-A001"})
+            data["candidate_count"] = 3
+            data["selected_path"] = backslash_path
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(f"selected_path must use forward slashes: {backslash_path}", errors)
 
     def test_selected_path_must_be_a_file(self):
         with tempfile.TemporaryDirectory() as tmp:
