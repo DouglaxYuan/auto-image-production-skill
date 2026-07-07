@@ -462,6 +462,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             ("task_id", "ASSET-0001-A001\nextra"),
             ("provider", "browser\nimage tool"),
             ("provider", "browser\x00image tool"),
+            ("provider", "browser\u0085image tool"),
         )
         for field, value in cases:
             with self.subTest(field=field):
@@ -696,15 +697,16 @@ class ValidateAttemptManifestTest(unittest.TestCase):
     def test_candidate_paths_must_not_contain_control_characters(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
-            control_path = "candidate\nname.png"
-            (root / control_path).write_bytes(b"png-a")
-            data = self.valid_manifest(root)
-            data["candidates"][0]["path"] = control_path
-            manifest_path = self.write_manifest(root, data)
+            for control_path in ("candidate\nname.png", "candidate\u0085name.png"):
+                with self.subTest(path=control_path):
+                    (root / control_path).write_bytes(b"png-a")
+                    data = self.valid_manifest(root)
+                    data["candidates"][0]["path"] = control_path
+                    manifest_path = self.write_manifest(root, data)
 
-            errors = validate_manifest(manifest_path)
+                    errors = validate_manifest(manifest_path)
 
-        self.assertIn("candidate path must not contain control characters", errors)
+                    self.assertIn("candidate path must not contain control characters", errors)
 
     def test_candidate_paths_must_not_contain_unicode_format_characters(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -938,6 +940,17 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate 1 task_id must not contain control characters", errors)
 
+    def test_candidate_task_id_must_not_contain_unicode_control_character(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["task_id"] = "ASSET-0001-A001\u0085"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate 1 task_id must not contain control characters", errors)
+
     def test_candidate_task_id_mismatch_is_reported_when_path_duplicates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -1026,17 +1039,18 @@ class ValidateAttemptManifestTest(unittest.TestCase):
     def test_selected_path_must_not_contain_control_characters(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
-            control_path = "candidate\tname.png"
-            (root / control_path).write_bytes(b"png-target")
-            data = self.valid_manifest(root)
-            data["candidates"].append({"path": control_path, "task_id": "ASSET-0001-A001"})
-            data["candidate_count"] = 3
-            data["selected_path"] = control_path
-            manifest_path = self.write_manifest(root, data)
+            for control_path in ("candidate\tname.png", "candidate\u0085name.png"):
+                with self.subTest(path=control_path):
+                    (root / control_path).write_bytes(b"png-target")
+                    data = self.valid_manifest(root)
+                    data["candidates"].append({"path": control_path, "task_id": "ASSET-0001-A001"})
+                    data["candidate_count"] = 3
+                    data["selected_path"] = control_path
+                    manifest_path = self.write_manifest(root, data)
 
-            errors = validate_manifest(manifest_path)
+                    errors = validate_manifest(manifest_path)
 
-        self.assertIn("selected_path must not contain control characters", errors)
+                    self.assertIn("selected_path must not contain control characters", errors)
 
     def test_selected_path_must_not_contain_unicode_format_characters(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -43,7 +43,7 @@ def _is_non_empty_string(value: Any) -> bool:
 
 
 def _string_has_control_character(value: str) -> bool:
-    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+    return any(unicodedata.category(character) == "Cc" for character in value)
 
 
 def _string_has_unicode_format_character(value: str) -> bool:
