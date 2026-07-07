@@ -161,8 +161,11 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
             errors.append(f"candidate path does not exist: {candidate_path}")
 
         candidate_task_id = candidate.get("task_id")
-        if candidate_task_id is not None and candidate_task_id != task_id:
-            errors.append(f"candidate {index} task_id does not match manifest task_id")
+        if candidate_task_id is not None:
+            if not _is_non_empty_string(candidate_task_id):
+                errors.append(f"candidate {index} task_id must be a non-empty string when present")
+            elif candidate_task_id != task_id:
+                errors.append(f"candidate {index} task_id does not match manifest task_id")
 
     selected_path = data.get("selected_path")
     if selected_path is not None:
