@@ -171,8 +171,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             errors.append(f"duplicate candidate path: {candidate_path}")
             continue
         resolved_candidate_paths.add(resolved)
-        if not resolved.is_file():
+        if not resolved.exists():
             errors.append(f"candidate path does not exist: {candidate_path}")
+        elif not resolved.is_file():
+            errors.append(f"candidate path is not a file: {candidate_path}")
 
         candidate_task_id = candidate.get("task_id")
         if candidate_task_id is not None:
