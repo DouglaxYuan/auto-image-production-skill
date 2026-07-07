@@ -10,7 +10,7 @@ Use this contract for automated image-production workflows.
 - `generation_rules`: visual and workflow rules the model must follow.
 - `provider`: browser image tool or API image model.
 - `candidate_count`: expected number of candidates.
-- `result_binding`: task id, provider id, DOM/message-region rule, or API response field proving candidates belong to this attempt.
+- `result_binding`: string or JSON-like metadata containing the task id, provider id, DOM/message-region rule, or API response field proving candidates belong to this attempt.
 - `validation_rules`: checks required before accepting candidates.
 - `selection_criteria`: how to choose the final image.
 - `commit_target`: final output path, filename pattern, manifest/registry destination.
@@ -57,7 +57,7 @@ When an attempt writes a JSON manifest, validate the local bookkeeping before pu
 python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
 
-The validator checks required fields, `candidate_count`, `result_binding`, relative candidate file paths, candidate path containment inside the attempt directory, duplicate candidate paths, candidate task ids, and normalized relative `selected_path` membership. It does not replace image decoding, OCR, perceptual hashing, or project-specific quality checks.
+The validator checks required fields, `candidate_count`, `result_binding` with nested string values, relative candidate file paths, candidate path containment inside the attempt directory, duplicate candidate paths, candidate task ids, and normalized relative `selected_path` membership. It does not replace image decoding, OCR, perceptual hashing, or project-specific quality checks.
 
 ## Result Validation
 

@@ -92,6 +92,22 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("missing required field: result_binding", errors)
 
+    def test_result_binding_can_be_nested_provider_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = {
+                "provider_response": {
+                    "task_id": "ASSET-0001-A001",
+                    "message_region": "assistant response after submit",
+                }
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertEqual([], errors)
+
     def test_candidate_count_must_match_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
