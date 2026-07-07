@@ -54,6 +54,14 @@ def _string_has_surrogate_character(value: str) -> bool:
     return any(unicodedata.category(character) == "Cs" for character in value)
 
 
+def _json_key_has_unsafe_display_character(value: str) -> bool:
+    return (
+        _string_has_control_character(value)
+        or _string_has_unicode_format_character(value)
+        or _string_has_surrogate_character(value)
+    )
+
+
 def _identity_has_unsafe_character(value: str, label: str, errors: list[str]) -> bool:
     has_error = False
     if value != value.strip():
@@ -104,6 +112,8 @@ def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, An
     result: dict[str, Any] = {}
     for key, value in pairs:
         if key in result:
+            if _json_key_has_unsafe_display_character(key):
+                raise ValueError("duplicate JSON key with unsafe characters")
             raise ValueError(f"duplicate JSON key: {key}")
         result[key] = value
     return result
@@ -298,6 +308,8 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
         return None
     except ValueError as exc:
         if str(exc).startswith("duplicate JSON key: "):
+            errors.append(f"manifest contains {exc}")
+        elif str(exc) == "duplicate JSON key with unsafe characters":
             errors.append(f"manifest contains {exc}")
         else:
             errors.append(f"manifest is not valid JSON: {exc}")

@@ -279,6 +279,28 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest contains duplicate JSON key: item_id", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_does_not_echo_unsafe_duplicate_json_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            manifest_path = root / "attempt.json"
+            manifest_path.write_text(
+                '{"bad\\nkey": 1, "bad\\nkey": 2}',
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest contains duplicate JSON key with unsafe characters", result.stderr)
+        self.assertNotIn("bad\nkey", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_cli_rejects_manifest_file_symlink_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
