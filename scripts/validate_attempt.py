@@ -83,6 +83,22 @@ def _attempt_path_is_symlink(
     return False
 
 
+def _attempt_path_has_symlinked_directory(
+    attempt_root: Path, relative_path: str, label: str, errors: list[str]
+) -> bool:
+    current_path = attempt_root
+    try:
+        for part in Path(relative_path).parts[:-1]:
+            current_path = current_path / part
+            if current_path.is_symlink():
+                errors.append(f"{label} must not contain symlinked directories: {relative_path}")
+                return True
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(f"{label} is invalid: {relative_path} ({exc})")
+        return True
+    return False
+
+
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
     try:
         manifest_path.resolve(strict=True)
@@ -211,6 +227,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             continue
         if _attempt_path_is_symlink(attempt_root, candidate_path, "candidate path", errors):
             continue
+        if _attempt_path_has_symlinked_directory(
+            attempt_root, candidate_path, "candidate path", errors
+        ):
+            continue
         if not _is_relative_to(resolved, attempt_root):
             errors.append(f"candidate path escapes attempt directory: {candidate_path}")
             continue
@@ -240,6 +260,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
                 )
                 if resolved_selected is not None:
                     if _attempt_path_is_symlink(
+                        attempt_root, selected_path, "selected_path", errors
+                    ):
+                        pass
+                    elif _attempt_path_has_symlinked_directory(
                         attempt_root, selected_path, "selected_path", errors
                     ):
                         pass
