@@ -579,6 +579,19 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors,
         )
 
+    def test_candidate_paths_must_not_contain_control_characters(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            control_path = "candidate\nname.png"
+            (root / control_path).write_bytes(b"png-a")
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = control_path
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate path must not contain control characters", errors)
+
     def test_candidate_paths_must_not_escape_with_parent_references(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -830,6 +843,21 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             "generated//candidate-target.png",
             errors,
         )
+
+    def test_selected_path_must_not_contain_control_characters(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            control_path = "candidate\tname.png"
+            (root / control_path).write_bytes(b"png-target")
+            data = self.valid_manifest(root)
+            data["candidates"].append({"path": control_path, "task_id": "ASSET-0001-A001"})
+            data["candidate_count"] = 3
+            data["selected_path"] = control_path
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("selected_path must not contain control characters", errors)
 
     def test_selected_path_must_not_contain_parent_references(self):
         with tempfile.TemporaryDirectory() as tmp:
