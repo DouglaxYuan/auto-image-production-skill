@@ -54,12 +54,16 @@ def _string_has_surrogate_character(value: str) -> bool:
     return any(unicodedata.category(character) == "Cs" for character in value)
 
 
-def _json_key_has_unsafe_display_character(value: str) -> bool:
+def _string_has_unsafe_display_character(value: str) -> bool:
     return (
         _string_has_control_character(value)
         or _string_has_unicode_format_character(value)
         or _string_has_surrogate_character(value)
     )
+
+
+def _json_key_has_unsafe_display_character(value: str) -> bool:
+    return _string_has_unsafe_display_character(value)
 
 
 def _identity_has_unsafe_character(value: str, label: str, errors: list[str]) -> bool:
@@ -325,6 +329,17 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
     """Return validation errors for an attempt manifest."""
     path = Path(manifest_path)
     errors: list[str] = []
+    manifest_path_text = str(path)
+    if _string_has_control_character(manifest_path_text):
+        errors.append("manifest path must not contain control characters")
+        return errors
+    if _string_has_unicode_format_character(manifest_path_text):
+        errors.append("manifest path must not contain Unicode format characters")
+        return errors
+    if _string_has_surrogate_character(manifest_path_text):
+        errors.append("manifest path must not contain surrogate characters")
+        return errors
+
     try:
         attempt_root = path.parent.resolve()
     except (OSError, RuntimeError, ValueError) as exc:

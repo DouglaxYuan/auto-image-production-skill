@@ -111,6 +111,23 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest path is not a file:", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_does_not_echo_unsafe_manifest_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_path = Path(tmp) / "bad\nattempt.json"
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest path must not contain control characters", result.stderr)
+        self.assertNotIn("bad\nattempt.json", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_cli_reports_non_utf8_manifest_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             manifest_path = Path(tmp) / "attempt.json"
