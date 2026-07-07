@@ -26,6 +26,12 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         manifest_path.write_text(json.dumps(data), encoding="utf-8")
         return manifest_path
 
+    def deeply_nested_list(self, depth):
+        value = "no-task"
+        for _ in range(depth):
+            value = [value]
+        return value
+
     def valid_manifest(self, root):
         candidate_a = root / "candidate-a.png"
         candidate_b = root / "candidate-b.png"
@@ -299,6 +305,25 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
+
+    def test_cli_reports_deeply_nested_result_binding_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = self.deeply_nested_list(600)
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("result_binding is too deeply nested:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
 
     def test_core_identity_fields_must_be_non_empty_strings(self):
         for field in ("item_id", "attempt_id", "provider"):

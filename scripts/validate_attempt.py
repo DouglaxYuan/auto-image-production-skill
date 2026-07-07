@@ -212,8 +212,14 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         )
 
     result_binding = data.get("result_binding")
-    if "result_binding" in data and task_id and not _binding_references_task(result_binding, task_id):
-        errors.append(f"result_binding does not reference task_id: {task_id}")
+    if "result_binding" in data and task_id:
+        try:
+            binding_references_task = _binding_references_task(result_binding, task_id)
+        except RecursionError as exc:
+            errors.append(f"result_binding is too deeply nested: {exc}")
+        else:
+            if not binding_references_task:
+                errors.append(f"result_binding does not reference task_id: {task_id}")
 
     resolved_candidate_paths: set[Path] = set()
     for index, candidate in enumerate(candidates, start=1):
