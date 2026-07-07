@@ -390,11 +390,33 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
 
+    def test_result_binding_rejects_task_id_with_unicode_letter_suffix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = "provider echoed TASK-ID ASSET-0001-A001\u65e7"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
+
     def test_result_binding_accepts_task_id_followed_by_sentence_period(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["result_binding"] = "provider echoed TASK-ID ASSET-0001-A001."
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertEqual([], errors)
+
+    def test_result_binding_accepts_task_id_in_unicode_sentence_when_spaced(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = "\u4efb\u52a1 ASSET-0001-A001 \u5df2\u5b8c\u6210"
             manifest_path = self.write_manifest(root, data)
 
             errors = validate_manifest(manifest_path)
