@@ -45,7 +45,10 @@ def _is_non_empty_string(value: Any) -> bool:
 def _string_references_task(value: str, task_id: str) -> bool:
     task_pattern = re.escape(task_id)
     return (
-        re.search(rf"(?<![A-Za-z0-9_-]){task_pattern}(?![A-Za-z0-9_-])", value)
+        re.search(
+            rf"(?<![A-Za-z0-9_-]){task_pattern}(?![A-Za-z0-9_-]|\.[A-Za-z0-9])",
+            value,
+        )
         is not None
     )
 

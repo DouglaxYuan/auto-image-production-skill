@@ -379,6 +379,28 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
 
+    def test_result_binding_rejects_task_id_with_dotted_suffix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = "provider echoed TASK-ID ASSET-0001-A001.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
+
+    def test_result_binding_accepts_task_id_followed_by_sentence_period(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = "provider echoed TASK-ID ASSET-0001-A001."
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertEqual([], errors)
+
     def test_cli_reports_deeply_nested_result_binding_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
