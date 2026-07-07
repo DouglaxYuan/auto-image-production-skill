@@ -63,6 +63,27 @@ def _item_dir_name(manifest_path: Path) -> str | None:
     return attempt_parent.parent.name
 
 
+def _attempt_collection_is_symlink(manifest_path: Path, errors: list[str]) -> bool:
+    attempt_collection = manifest_path.parent.parent
+    if attempt_collection.name not in (".attempts", "attempts"):
+        return False
+
+    try:
+        is_symlink = attempt_collection.is_symlink()
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(
+            f"manifest attempt collection directory is invalid: {attempt_collection} ({exc})"
+        )
+        return True
+
+    if is_symlink:
+        errors.append(
+            f"manifest attempt collection directory must not be a symlink: {attempt_collection}"
+        )
+        return True
+    return False
+
+
 def _resolve_attempt_path(attempt_root: Path, relative_path: str, label: str, errors: list[str]) -> Path | None:
     try:
         resolved = (attempt_root / relative_path).resolve()
@@ -167,6 +188,9 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
 
     if parent_is_symlink:
         errors.append(f"manifest parent directory must not be a symlink: {path.parent}")
+        return errors
+
+    if _attempt_collection_is_symlink(path, errors):
         return errors
 
     data = _load_manifest(path, errors)

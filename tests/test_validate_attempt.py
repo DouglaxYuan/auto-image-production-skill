@@ -372,6 +372,28 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("item_id ASSET-9999 does not match item directory ASSET-0001", errors)
 
+    def test_attempt_collection_symlink_is_rejected_in_item_layout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            item_root = Path(tmp) / "ASSET-0001"
+            item_root.mkdir()
+            outside_attempts = Path(tmp) / "outside-attempts"
+            outside_attempts.mkdir()
+            attempt_collection = item_root / ".attempts"
+            try:
+                attempt_collection.symlink_to(outside_attempts, target_is_directory=True)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"symlink unsupported: {exc}")
+            root = attempt_collection / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            f"manifest attempt collection directory must not be a symlink: {attempt_collection}",
+            errors,
+        )
+
     def test_candidate_count_must_match_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
