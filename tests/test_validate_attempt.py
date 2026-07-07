@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +9,8 @@ from scripts.validate_attempt import validate_manifest
 
 
 class ValidateAttemptManifestTest(unittest.TestCase):
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "validate_attempt.py"
+
     def write_manifest(self, root, data):
         manifest_path = root / "attempt.json"
         manifest_path.write_text(json.dumps(data), encoding="utf-8")
@@ -42,6 +46,40 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertEqual([], errors)
+
+    def test_cli_exits_zero_for_valid_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("attempt manifest valid", result.stdout.strip())
+        self.assertEqual("", result.stderr.strip())
+
+    def test_cli_exits_nonzero_for_invalid_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = self.valid_manifest(root)
+            data["candidate_count"] = 3
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("candidate_count is 3 but candidates has 2 entries", result.stderr)
 
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
