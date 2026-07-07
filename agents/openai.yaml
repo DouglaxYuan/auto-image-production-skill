@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Image Production"
+  short_description: "Automated final-image workflow"
+  default_prompt: "Use $auto-image-production to run an automated image-production workflow from rules and prompts through validation, selection, and atomic commit."
