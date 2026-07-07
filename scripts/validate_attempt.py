@@ -78,6 +78,10 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
         errors.append(f"manifest path is invalid: {manifest_path} ({exc})")
         return None
 
+    if manifest_path.is_symlink():
+        errors.append(f"manifest path must not be a symlink: {manifest_path}")
+        return None
+
     if not manifest_path.is_file():
         errors.append(f"manifest path is not a file: {manifest_path}")
         return None
