@@ -42,6 +42,25 @@ def _is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _string_has_control_character(value: str) -> bool:
+    return any(0 < ord(character) < 32 or ord(character) == 127 for character in value)
+
+
+def _string_has_unicode_format_character(value: str) -> bool:
+    return any(unicodedata.category(character) == "Cf" for character in value)
+
+
+def _identity_has_unsafe_character(value: str, label: str, errors: list[str]) -> bool:
+    has_error = False
+    if _string_has_control_character(value):
+        errors.append(f"{label} must not contain control characters")
+        has_error = True
+    if _string_has_unicode_format_character(value):
+        errors.append(f"{label} must not contain Unicode format characters")
+        has_error = True
+    return has_error
+
+
 def _string_references_task(value: str, task_id: str) -> bool:
     task_pattern = re.escape(task_id)
     return (
@@ -162,7 +181,7 @@ def _attempt_path_has_repeated_separator(relative_path: str, label: str, errors:
 
 
 def _attempt_path_has_control_character(relative_path: str, label: str, errors: list[str]) -> bool:
-    if any(0 < ord(character) < 32 or ord(character) == 127 for character in relative_path):
+    if _string_has_control_character(relative_path):
         errors.append(f"{label} must not contain control characters")
         return True
     return False
@@ -171,7 +190,7 @@ def _attempt_path_has_control_character(relative_path: str, label: str, errors: 
 def _attempt_path_has_unicode_format_character(
     relative_path: str, label: str, errors: list[str]
 ) -> bool:
-    if any(unicodedata.category(character) == "Cf" for character in relative_path):
+    if _string_has_unicode_format_character(relative_path):
         errors.append(f"{label} must not contain Unicode format characters")
         return True
     return False
@@ -309,6 +328,11 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         if field in data and not _is_non_empty_string(data.get(field)):
             errors.append(f"{field} must be a non-empty string")
 
+    for field in ("item_id", "attempt_id", "task_id", "provider"):
+        value = data.get(field)
+        if isinstance(value, str):
+            _identity_has_unsafe_character(value, field, errors)
+
     attempt_id = data.get("attempt_id")
     if _is_non_empty_string(attempt_id) and attempt_id != attempt_root.name:
         errors.append(f"attempt_id {attempt_id} does not match attempt directory {attempt_root.name}")
@@ -358,6 +382,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         if candidate_task_id is not None:
             if not _is_non_empty_string(candidate_task_id):
                 errors.append(f"candidate {index} task_id must be a non-empty string when present")
+            elif _identity_has_unsafe_character(
+                candidate_task_id, f"candidate {index} task_id", errors
+            ):
+                pass
             elif candidate_task_id != task_id:
                 errors.append(f"candidate {index} task_id does not match manifest task_id")
 

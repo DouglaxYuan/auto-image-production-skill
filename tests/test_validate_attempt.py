@@ -455,6 +455,52 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
                 self.assertIn(f"{field} must be a non-empty string", errors)
 
+    def test_core_identity_fields_must_not_contain_control_characters(self):
+        cases = (
+            ("item_id", "ASSET-0001\nextra"),
+            ("attempt_id", "A-0001-001\nextra"),
+            ("task_id", "ASSET-0001-A001\nextra"),
+            ("provider", "browser\nimage tool"),
+        )
+        for field, value in cases:
+            with self.subTest(field=field):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = self.attempt_root(tmp)
+                    data = self.valid_manifest(root)
+                    data[field] = value
+                    if field == "task_id":
+                        data["result_binding"] = f"TASK-ID {value}"
+                        for candidate in data["candidates"]:
+                            candidate["task_id"] = value
+                    manifest_path = self.write_manifest(root, data)
+
+                    errors = validate_manifest(manifest_path)
+
+                self.assertIn(f"{field} must not contain control characters", errors)
+
+    def test_core_identity_fields_must_not_contain_unicode_format_characters(self):
+        cases = (
+            ("item_id", "ASSET-0001\u202e"),
+            ("attempt_id", "A-0001-001\u202e"),
+            ("task_id", "ASSET-0001-A001\u202e"),
+            ("provider", "browser\u202e image tool"),
+        )
+        for field, value in cases:
+            with self.subTest(field=field):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = self.attempt_root(tmp)
+                    data = self.valid_manifest(root)
+                    data[field] = value
+                    if field == "task_id":
+                        data["result_binding"] = f"TASK-ID {value}"
+                        for candidate in data["candidates"]:
+                            candidate["task_id"] = value
+                    manifest_path = self.write_manifest(root, data)
+
+                    errors = validate_manifest(manifest_path)
+
+                self.assertIn(f"{field} must not contain Unicode format characters", errors)
+
     def test_attempt_id_must_match_attempt_directory_name(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -831,6 +877,17 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertIn("candidate 1 task_id must be a non-empty string when present", errors)
+
+    def test_candidate_task_id_must_not_contain_unicode_format_characters(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["task_id"] = "ASSET-0001-A001\u202e"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate 1 task_id must not contain Unicode format characters", errors)
 
     def test_candidate_task_id_mismatch_is_reported_when_path_duplicates(self):
         with tempfile.TemporaryDirectory() as tmp:
