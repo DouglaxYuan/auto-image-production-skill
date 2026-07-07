@@ -82,7 +82,7 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
     return data
 
 
-def validate_manifest(manifest_path: str | Path) -> list[str]:
+def validate_manifest(manifest_path: str | Path, *, require_selected: bool = False) -> list[str]:
     """Return validation errors for an attempt manifest."""
     path = Path(manifest_path)
     attempt_root = path.parent.resolve()
@@ -168,7 +168,10 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
                 errors.append(f"candidate {index} task_id does not match manifest task_id")
 
     selected_path = data.get("selected_path")
-    if selected_path is not None:
+    if selected_path is None:
+        if require_selected:
+            errors.append("selected_path is required when --require-selected is used")
+    else:
         if not _is_non_empty_string(selected_path):
             errors.append("selected_path must be a non-empty string when present")
         else:
@@ -190,10 +193,15 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate an auto-image-production attempt manifest.")
+    parser.add_argument(
+        "--require-selected",
+        action="store_true",
+        help="Require selected_path for publish-time validation.",
+    )
     parser.add_argument("manifest", help="Path to attempt manifest JSON")
     args = parser.parse_args(argv)
 
-    errors = validate_manifest(args.manifest)
+    errors = validate_manifest(args.manifest, require_selected=args.require_selected)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

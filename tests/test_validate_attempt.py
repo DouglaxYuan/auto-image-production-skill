@@ -379,6 +379,24 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("selected_path is not listed in candidates: not-a-candidate.png", errors)
 
+    def test_cli_can_require_selected_path_before_publish(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data.pop("selected_path")
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), "--require-selected", str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("selected_path is required when --require-selected is used", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

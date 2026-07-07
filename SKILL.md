@@ -97,6 +97,7 @@ Adapt these checks to the current project:
 ```bash
 git status --short
 python scripts/validate_attempt.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
+python scripts/validate_attempt.py --require-selected path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python -m unittest discover -s tests -q
 python -m compileall -q src scripts tests
 sqlite3 path/to/image_pipeline.sqlite 'PRAGMA integrity_check;'
