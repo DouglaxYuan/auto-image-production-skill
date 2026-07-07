@@ -88,8 +88,13 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
 def validate_manifest(manifest_path: str | Path, *, require_selected: bool = False) -> list[str]:
     """Return validation errors for an attempt manifest."""
     path = Path(manifest_path)
-    attempt_root = path.parent.resolve()
     errors: list[str] = []
+    try:
+        attempt_root = path.parent.resolve()
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(f"manifest parent directory is invalid: {path.parent} ({exc})")
+        return errors
+
     data = _load_manifest(path, errors)
     if data is None:
         return errors
