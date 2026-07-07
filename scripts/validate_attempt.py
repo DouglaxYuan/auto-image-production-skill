@@ -108,9 +108,30 @@ def _resolve_attempt_path(attempt_root: Path, relative_path: str, label: str, er
     return resolved
 
 
+def _attempt_path_segments(relative_path: str) -> list[str]:
+    return [segment for segment in re.split(r"[\\/]+", relative_path) if segment]
+
+
 def _attempt_path_has_parent_reference(relative_path: str, label: str, errors: list[str]) -> bool:
     if ".." in Path(relative_path).parts:
         errors.append(f"{label} must not contain parent directory references: {relative_path}")
+        return True
+    return False
+
+
+def _attempt_path_has_trailing_separator(relative_path: str, label: str, errors: list[str]) -> bool:
+    if relative_path.endswith(("/", "\\")):
+        errors.append(f"{label} must not end with a path separator: {relative_path}")
+        return True
+    return False
+
+
+def _attempt_path_has_current_directory_reference(
+    relative_path: str, label: str, errors: list[str]
+) -> bool:
+    segments = _attempt_path_segments(relative_path)
+    if segments == ["."] or "." in segments[1:]:
+        errors.append(f"{label} must not contain current directory references: {relative_path}")
         return True
     return False
 
@@ -292,6 +313,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         if resolved.is_absolute():
             errors.append(f"candidate path must be relative: {candidate_path}")
             continue
+        if _attempt_path_has_trailing_separator(candidate_path, "candidate path", errors):
+            continue
+        if _attempt_path_has_current_directory_reference(candidate_path, "candidate path", errors):
+            continue
         if _attempt_path_has_parent_reference(candidate_path, "candidate path", errors):
             continue
         resolved = _resolve_attempt_path(attempt_root, candidate_path, "candidate path", errors)
@@ -326,6 +351,12 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             resolved_selected = Path(selected_path)
             if resolved_selected.is_absolute():
                 errors.append(f"selected_path must be relative: {selected_path}")
+            elif _attempt_path_has_trailing_separator(selected_path, "selected_path", errors):
+                pass
+            elif _attempt_path_has_current_directory_reference(
+                selected_path, "selected_path", errors
+            ):
+                pass
             elif _attempt_path_has_parent_reference(selected_path, "selected_path", errors):
                 pass
             else:
