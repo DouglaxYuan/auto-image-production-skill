@@ -152,6 +152,13 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             errors.append(f"candidate {index} must be an object")
             continue
 
+        candidate_task_id = candidate.get("task_id")
+        if candidate_task_id is not None:
+            if not _is_non_empty_string(candidate_task_id):
+                errors.append(f"candidate {index} task_id must be a non-empty string when present")
+            elif candidate_task_id != task_id:
+                errors.append(f"candidate {index} task_id does not match manifest task_id")
+
         candidate_path = candidate.get("path")
         if not _is_non_empty_string(candidate_path):
             errors.append(f"candidate {index} missing path")
@@ -175,13 +182,6 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             errors.append(f"candidate path does not exist: {candidate_path}")
         elif not resolved.is_file():
             errors.append(f"candidate path is not a file: {candidate_path}")
-
-        candidate_task_id = candidate.get("task_id")
-        if candidate_task_id is not None:
-            if not _is_non_empty_string(candidate_task_id):
-                errors.append(f"candidate {index} task_id must be a non-empty string when present")
-            elif candidate_task_id != task_id:
-                errors.append(f"candidate {index} task_id does not match manifest task_id")
 
     selected_path = data.get("selected_path")
     if selected_path is None:

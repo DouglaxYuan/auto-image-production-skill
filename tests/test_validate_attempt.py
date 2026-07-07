@@ -372,6 +372,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate 1 task_id must be a non-empty string when present", errors)
 
+    def test_candidate_task_id_mismatch_is_reported_when_path_duplicates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][1]["path"] = "./candidate-a.png"
+            data["candidates"][1]["task_id"] = "ASSET-0001-A999"
+            data["selected_path"] = "candidate-a.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("duplicate candidate path: ./candidate-a.png", errors)
+        self.assertIn("candidate 2 task_id does not match manifest task_id", errors)
+
     def test_selected_path_matches_candidate_after_resolution(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
