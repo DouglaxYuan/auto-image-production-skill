@@ -11,6 +11,11 @@ from scripts.validate_attempt import validate_manifest
 class ValidateAttemptManifestTest(unittest.TestCase):
     script_path = Path(__file__).resolve().parents[1] / "scripts" / "validate_attempt.py"
 
+    def attempt_root(self, tmp):
+        root = Path(tmp) / "A-0001-001"
+        root.mkdir()
+        return root
+
     def write_manifest(self, root, data):
         manifest_path = root / "attempt.json"
         manifest_path.write_text(json.dumps(data), encoding="utf-8")
@@ -40,7 +45,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_valid_manifest_has_no_errors(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             manifest_path = self.write_manifest(root, self.valid_manifest(root))
 
             errors = validate_manifest(manifest_path)
@@ -49,7 +54,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_cli_exits_zero_for_valid_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             manifest_path = self.write_manifest(root, self.valid_manifest(root))
 
             result = subprocess.run(
@@ -65,7 +70,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_cli_exits_nonzero_for_invalid_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["candidate_count"] = 3
             manifest_path = self.write_manifest(root, data)
@@ -83,7 +88,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data.pop("result_binding")
             manifest_path = self.write_manifest(root, data)
@@ -94,7 +99,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_result_binding_can_be_nested_provider_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["result_binding"] = {
                 "provider_response": {
@@ -112,7 +117,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         for field in ("item_id", "attempt_id", "provider"):
             with self.subTest(field=field):
                 with tempfile.TemporaryDirectory() as tmp:
-                    root = Path(tmp)
+                    root = self.attempt_root(tmp)
                     data = self.valid_manifest(root)
                     data[field] = "   "
                     manifest_path = self.write_manifest(root, data)
@@ -121,9 +126,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
                 self.assertIn(f"{field} must be a non-empty string", errors)
 
+    def test_attempt_id_must_match_attempt_directory_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["attempt_id"] = "A-0001-999"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("attempt_id A-0001-999 does not match attempt directory A-0001-001", errors)
+
     def test_candidate_count_must_match_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["candidate_count"] = 3
             manifest_path = self.write_manifest(root, data)
@@ -134,7 +150,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_candidate_paths_must_exist(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             (root / "candidate-a.png").unlink()
             manifest_path = self.write_manifest(root, data)
@@ -145,7 +161,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_candidate_paths_must_be_relative(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             absolute_path = root / "candidate-a.png"
             data["candidates"][0]["path"] = str(absolute_path)
@@ -157,7 +173,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_candidate_paths_must_stay_inside_attempt_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             attempt_root = root / "attempt"
             attempt_root.mkdir()
             outside = root / "outside.png"
@@ -172,7 +188,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_candidate_paths_must_be_unique_after_resolution(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["candidates"][1]["path"] = "./candidate-a.png"
             data["selected_path"] = "candidate-a.png"
@@ -184,7 +200,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_selected_path_matches_candidate_after_resolution(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["candidates"][1]["path"] = "./candidate-b.png"
             data["selected_path"] = "candidate-b.png"
@@ -196,7 +212,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_selected_path_must_be_relative(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             absolute_path = root / "candidate-b.png"
             data["selected_path"] = str(absolute_path)
@@ -208,7 +224,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
     def test_selected_path_must_reference_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = self.attempt_root(tmp)
             data = self.valid_manifest(root)
             data["selected_path"] = "not-a-candidate.png"
             manifest_path = self.write_manifest(root, data)
