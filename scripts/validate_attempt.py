@@ -33,6 +33,14 @@ def _binding_references_task(binding: Any, task_id: str) -> bool:
     return False
 
 
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+    return True
+
+
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
     try:
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -101,7 +109,7 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
         if not resolved.is_absolute():
             resolved = path.parent / resolved
         resolved = resolved.resolve()
-        if not resolved.is_relative_to(attempt_root):
+        if not _is_relative_to(resolved, attempt_root):
             errors.append(f"candidate path escapes attempt directory: {candidate_path}")
             continue
         if resolved in resolved_candidate_paths:
@@ -124,7 +132,7 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
             if not resolved_selected.is_absolute():
                 resolved_selected = path.parent / resolved_selected
             resolved_selected = resolved_selected.resolve()
-            if not resolved_selected.is_relative_to(attempt_root):
+            if not _is_relative_to(resolved_selected, attempt_root):
                 errors.append(f"selected_path escapes attempt directory: {selected_path}")
             elif resolved_selected not in resolved_candidate_paths:
                 errors.append(f"selected_path is not listed in candidates: {selected_path}")
