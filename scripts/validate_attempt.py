@@ -87,6 +87,7 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
         errors.append(f"result_binding does not reference task_id: {task_id}")
 
     candidate_paths: set[str] = set()
+    resolved_candidate_paths: set[Path] = set()
     for index, candidate in enumerate(candidates, start=1):
         if not isinstance(candidate, dict):
             errors.append(f"candidate {index} must be an object")
@@ -105,6 +106,10 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
         if not resolved.is_relative_to(attempt_root):
             errors.append(f"candidate path escapes attempt directory: {candidate_path}")
             continue
+        if resolved in resolved_candidate_paths:
+            errors.append(f"duplicate candidate path: {candidate_path}")
+            continue
+        resolved_candidate_paths.add(resolved)
         if not resolved.is_file():
             errors.append(f"candidate path does not exist: {candidate_path}")
 
