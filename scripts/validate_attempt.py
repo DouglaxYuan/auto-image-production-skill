@@ -158,6 +158,7 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
     data = _load_manifest(path, errors)
     if data is None:
         return errors
+    normalized_manifest_path = attempt_root / path.name
 
     for field in REQUIRED_FIELDS:
         if field not in data:
@@ -168,11 +169,11 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             errors.append(f"{field} must be a non-empty string")
 
     attempt_id = data.get("attempt_id")
-    if _is_non_empty_string(attempt_id) and attempt_id != path.parent.name:
-        errors.append(f"attempt_id {attempt_id} does not match attempt directory {path.parent.name}")
+    if _is_non_empty_string(attempt_id) and attempt_id != attempt_root.name:
+        errors.append(f"attempt_id {attempt_id} does not match attempt directory {attempt_root.name}")
 
     item_id = data.get("item_id")
-    item_dir = _item_dir_name(path)
+    item_dir = _item_dir_name(normalized_manifest_path)
     if item_dir and _is_non_empty_string(item_id) and item_id != item_dir:
         errors.append(f"item_id {item_id} does not match item directory {item_dir}")
 

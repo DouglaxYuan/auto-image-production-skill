@@ -300,6 +300,18 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("item_id ASSET-9999 does not match item directory ASSET-0001", errors)
 
+    def test_item_id_layout_check_normalizes_manifest_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.staged_attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["item_id"] = "ASSET-9999"
+            manifest_path = self.write_manifest(root, data)
+            unnormalized_manifest_path = root / ".." / root.name / manifest_path.name
+
+            errors = validate_manifest(unnormalized_manifest_path)
+
+        self.assertIn("item_id ASSET-9999 does not match item directory ASSET-0001", errors)
+
     def test_candidate_count_must_match_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
