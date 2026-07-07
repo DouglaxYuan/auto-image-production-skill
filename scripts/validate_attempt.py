@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -64,6 +65,7 @@ def _item_dir_name(manifest_path: Path) -> str | None:
 
 
 def _attempt_collection_is_symlink(manifest_path: Path, errors: list[str]) -> bool:
+    manifest_path = Path(os.path.normpath(str(manifest_path)))
     attempt_collection = manifest_path.parent.parent
     if attempt_collection.name not in (".attempts", "attempts"):
         return False
