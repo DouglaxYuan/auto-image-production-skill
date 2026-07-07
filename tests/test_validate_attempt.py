@@ -243,6 +243,42 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("NaN", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_rejects_duplicate_json_keys_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            manifest_path = root / "attempt.json"
+            manifest_path.write_text(
+                """
+                {
+                    "item_id": "ASSET-9999",
+                    "item_id": "ASSET-0001",
+                    "attempt_id": "A-0001-001",
+                    "task_id": "ASSET-0001-A001",
+                    "provider": "browser image tool",
+                    "candidate_count": 1,
+                    "result_binding": "TASK-ID ASSET-0001-A001",
+                    "candidates": [
+                        {"path": "candidate-a.png", "task_id": "ASSET-0001-A001"}
+                    ],
+                    "selected_path": "candidate-a.png"
+                }
+                """,
+                encoding="utf-8",
+            )
+            (root / "candidate-a.png").write_bytes(b"png-a")
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest contains duplicate JSON key: item_id", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_cli_rejects_manifest_file_symlink_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)

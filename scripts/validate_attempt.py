@@ -53,6 +53,15 @@ def _reject_json_constant(value: str) -> None:
     raise ValueError(f"invalid JSON constant: {value}")
 
 
+def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def _is_relative_to(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -158,6 +167,7 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
     try:
         data = json.loads(
             manifest_path.read_text(encoding="utf-8"),
+            object_pairs_hook=_object_without_duplicate_keys,
             parse_constant=_reject_json_constant,
         )
     except OSError as exc:
@@ -173,7 +183,10 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
         errors.append(f"manifest is not valid JSON: {exc}")
         return None
     except ValueError as exc:
-        errors.append(f"manifest is not valid JSON: {exc}")
+        if str(exc).startswith("duplicate JSON key: "):
+            errors.append(f"manifest contains {exc}")
+        else:
+            errors.append(f"manifest is not valid JSON: {exc}")
         return None
 
     if not isinstance(data, dict):
