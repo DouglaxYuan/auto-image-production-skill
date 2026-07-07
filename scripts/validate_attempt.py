@@ -345,18 +345,29 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         if field in data and not _is_non_empty_string(data.get(field)):
             errors.append(f"{field} must be a non-empty string")
 
+    unsafe_identity_fields: set[str] = set()
     for field in ("item_id", "attempt_id", "task_id", "provider"):
         value = data.get(field)
         if isinstance(value, str):
-            _identity_has_unsafe_character(value, field, errors)
+            if _identity_has_unsafe_character(value, field, errors):
+                unsafe_identity_fields.add(field)
 
     attempt_id = data.get("attempt_id")
-    if _is_non_empty_string(attempt_id) and attempt_id != attempt_root.name:
+    if (
+        "attempt_id" not in unsafe_identity_fields
+        and _is_non_empty_string(attempt_id)
+        and attempt_id != attempt_root.name
+    ):
         errors.append(f"attempt_id {attempt_id} does not match attempt directory {attempt_root.name}")
 
     item_id = data.get("item_id")
     item_dir = _item_dir_name(normalized_manifest_path)
-    if item_dir and _is_non_empty_string(item_id) and item_id != item_dir:
+    if (
+        "item_id" not in unsafe_identity_fields
+        and item_dir
+        and _is_non_empty_string(item_id)
+        and item_id != item_dir
+    ):
         errors.append(f"item_id {item_id} does not match item directory {item_dir}")
 
     task_id = data.get("task_id")

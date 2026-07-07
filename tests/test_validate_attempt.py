@@ -480,6 +480,46 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
                 self.assertIn(f"{field} must not contain control characters", errors)
 
+    def test_cli_does_not_echo_unsafe_attempt_id_in_layout_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["attempt_id"] = "A-0001-001\nextra"
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("attempt_id must not contain control characters", result.stderr)
+        self.assertNotIn("does not match attempt directory", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+    def test_cli_does_not_echo_unsafe_item_id_in_layout_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.staged_attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["item_id"] = "ASSET-0001\nextra"
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("item_id must not contain control characters", result.stderr)
+        self.assertNotIn("does not match item directory", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_core_identity_fields_must_not_contain_unicode_format_characters(self):
         cases = (
             ("item_id", "ASSET-0001\u202e"),
