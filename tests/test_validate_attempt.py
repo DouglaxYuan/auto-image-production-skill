@@ -122,6 +122,24 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest is not valid UTF-8 text:", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_reports_deeply_nested_manifest_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_path = Path(tmp) / "attempt.json"
+            depth = sys.getrecursionlimit() + 1000
+            manifest_path.write_text("[" * depth + "]" * depth, encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest is too deeply nested:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_cli_reports_unreadable_manifest_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             manifest_path = Path(tmp) / "attempt.json"

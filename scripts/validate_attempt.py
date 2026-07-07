@@ -129,6 +129,9 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
     except UnicodeDecodeError as exc:
         errors.append(f"manifest is not valid UTF-8 text: {exc}")
         return None
+    except RecursionError as exc:
+        errors.append(f"manifest is too deeply nested: {exc}")
+        return None
     except json.JSONDecodeError as exc:
         errors.append(f"manifest is not valid JSON: {exc}")
         return None
