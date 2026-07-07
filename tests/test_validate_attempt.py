@@ -401,6 +401,30 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
 
+    def test_cli_does_not_echo_unsafe_task_id_in_result_binding_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["task_id"] = "ASSET-0001-A001\nextra"
+            data["result_binding"] = "provider did not echo the task id"
+            for candidate in data["candidates"]:
+                candidate["task_id"] = data["task_id"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("task_id must not contain control characters", result.stderr)
+        self.assertNotIn("result_binding does not reference task_id", result.stderr)
+        self.assertNotIn("ASSET-0001-A001\nextra", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_result_binding_rejects_task_id_with_dotted_suffix(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)

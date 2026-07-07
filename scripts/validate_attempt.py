@@ -403,7 +403,7 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         )
 
     result_binding = data.get("result_binding")
-    if "result_binding" in data and task_id:
+    if "result_binding" in data and task_id and "task_id" not in unsafe_identity_fields:
         try:
             binding_references_task = _binding_references_task(result_binding, task_id)
         except RecursionError as exc:
