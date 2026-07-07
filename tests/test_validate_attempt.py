@@ -561,6 +561,24 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors,
         )
 
+    def test_candidate_paths_must_not_contain_repeated_separators(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            generated = root / "generated"
+            generated.mkdir()
+            (generated / "candidate-a.png").write_bytes(b"png-a")
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = "generated//candidate-a.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "candidate path must not contain repeated path separators: "
+            "generated//candidate-a.png",
+            errors,
+        )
+
     def test_candidate_paths_must_not_escape_with_parent_references(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -788,6 +806,28 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn(
             "selected_path must not contain current directory references: candidate-b.png/.",
+            errors,
+        )
+
+    def test_selected_path_must_not_contain_repeated_separators(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            generated = root / "generated"
+            generated.mkdir()
+            (generated / "candidate-target.png").write_bytes(b"png-target")
+            data = self.valid_manifest(root)
+            data["candidates"].append(
+                {"path": "generated/candidate-target.png", "task_id": "ASSET-0001-A001"}
+            )
+            data["candidate_count"] = 3
+            data["selected_path"] = "generated//candidate-target.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "selected_path must not contain repeated path separators: "
+            "generated//candidate-target.png",
             errors,
         )
 

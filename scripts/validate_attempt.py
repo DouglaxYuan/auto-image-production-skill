@@ -136,6 +136,13 @@ def _attempt_path_has_current_directory_reference(
     return False
 
 
+def _attempt_path_has_repeated_separator(relative_path: str, label: str, errors: list[str]) -> bool:
+    if "//" in relative_path:
+        errors.append(f"{label} must not contain repeated path separators: {relative_path}")
+        return True
+    return False
+
+
 def _attempt_path_has_backslash(relative_path: str, label: str, errors: list[str]) -> bool:
     if "\\" in relative_path:
         errors.append(f"{label} must use forward slashes: {relative_path}")
@@ -326,6 +333,8 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             continue
         if _attempt_path_has_parent_reference(candidate_path, "candidate path", errors):
             continue
+        if _attempt_path_has_repeated_separator(candidate_path, "candidate path", errors):
+            continue
         if _attempt_path_has_backslash(candidate_path, "candidate path", errors):
             continue
         resolved = _resolve_attempt_path(attempt_root, candidate_path, "candidate path", errors)
@@ -367,6 +376,8 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             ):
                 pass
             elif _attempt_path_has_parent_reference(selected_path, "selected_path", errors):
+                pass
+            elif _attempt_path_has_repeated_separator(selected_path, "selected_path", errors):
                 pass
             elif _attempt_path_has_backslash(selected_path, "selected_path", errors):
                 pass
