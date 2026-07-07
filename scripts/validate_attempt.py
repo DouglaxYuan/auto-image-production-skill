@@ -69,6 +69,9 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
 
     try:
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        errors.append(f"manifest could not be read: {exc}")
+        return None
     except UnicodeDecodeError as exc:
         errors.append(f"manifest is not valid UTF-8 text: {exc}")
         return None
