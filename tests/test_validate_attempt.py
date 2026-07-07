@@ -108,6 +108,19 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertEqual([], errors)
 
+    def test_core_identity_fields_must_be_non_empty_strings(self):
+        for field in ("item_id", "attempt_id", "provider"):
+            with self.subTest(field=field):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    data = self.valid_manifest(root)
+                    data[field] = "   "
+                    manifest_path = self.write_manifest(root, data)
+
+                    errors = validate_manifest(manifest_path)
+
+                self.assertIn(f"{field} must be a non-empty string", errors)
+
     def test_candidate_count_must_match_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

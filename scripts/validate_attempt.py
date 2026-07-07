@@ -72,6 +72,10 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
         if field not in data:
             errors.append(f"missing required field: {field}")
 
+    for field in ("item_id", "attempt_id", "provider"):
+        if field in data and not _is_non_empty_string(data.get(field)):
+            errors.append(f"{field} must be a non-empty string")
+
     task_id = data.get("task_id")
     if not _is_non_empty_string(task_id):
         errors.append("task_id must be a non-empty string")
