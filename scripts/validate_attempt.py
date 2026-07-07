@@ -53,7 +53,7 @@ def _item_dir_name(manifest_path: Path) -> str | None:
 def _resolve_attempt_path(attempt_root: Path, relative_path: str, label: str, errors: list[str]) -> Path | None:
     try:
         resolved = (attempt_root / relative_path).resolve()
-    except (OSError, ValueError) as exc:
+    except (OSError, RuntimeError, ValueError) as exc:
         errors.append(f"{label} is invalid: {relative_path} ({exc})")
         return None
     return resolved
