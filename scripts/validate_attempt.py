@@ -68,6 +68,21 @@ def _resolve_attempt_path(attempt_root: Path, relative_path: str, label: str, er
     return resolved
 
 
+def _attempt_path_is_symlink(
+    attempt_root: Path, relative_path: str, label: str, errors: list[str]
+) -> bool:
+    try:
+        is_symlink = (attempt_root / relative_path).is_symlink()
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(f"{label} is invalid: {relative_path} ({exc})")
+        return True
+
+    if is_symlink:
+        errors.append(f"{label} must not be a symlink: {relative_path}")
+        return True
+    return False
+
+
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
     try:
         manifest_path.resolve(strict=True)
@@ -184,6 +199,8 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         resolved = _resolve_attempt_path(attempt_root, candidate_path, "candidate path", errors)
         if resolved is None:
             continue
+        if _attempt_path_is_symlink(attempt_root, candidate_path, "candidate path", errors):
+            continue
         if not _is_relative_to(resolved, attempt_root):
             errors.append(f"candidate path escapes attempt directory: {candidate_path}")
             continue
@@ -212,7 +229,11 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
                     attempt_root, selected_path, "selected_path", errors
                 )
                 if resolved_selected is not None:
-                    if not _is_relative_to(resolved_selected, attempt_root):
+                    if _attempt_path_is_symlink(
+                        attempt_root, selected_path, "selected_path", errors
+                    ):
+                        pass
+                    elif not _is_relative_to(resolved_selected, attempt_root):
                         errors.append(f"selected_path escapes attempt directory: {selected_path}")
                     else:
                         if not resolved_selected.exists():

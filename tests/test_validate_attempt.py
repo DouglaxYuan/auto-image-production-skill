@@ -383,6 +383,25 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("candidate path is invalid: loop.png", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_candidate_path_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            target_path = root / "candidate-target.png"
+            target_path.write_bytes(b"png-target")
+            link_path = root / "candidate-link.png"
+            try:
+                link_path.symlink_to(target_path)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"symlink unsupported: {exc}")
+
+            data = self.valid_manifest(root)
+            data["candidates"][0]["path"] = "candidate-link.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate path must not be a symlink: candidate-link.png", errors)
+
     def test_candidate_paths_must_be_unique_after_resolution(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -499,6 +518,27 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual("", result.stdout.strip())
         self.assertIn("selected_path is invalid: loop.png", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
+
+    def test_selected_path_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            target_path = root / "candidate-target.png"
+            target_path.write_bytes(b"png-target")
+            link_path = root / "candidate-link.png"
+            try:
+                link_path.symlink_to(target_path)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"symlink unsupported: {exc}")
+
+            data = self.valid_manifest(root)
+            data["candidates"].append({"path": "candidate-target.png", "task_id": "ASSET-0001-A001"})
+            data["candidate_count"] = 3
+            data["selected_path"] = "candidate-link.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("selected_path must not be a symlink: candidate-link.png", errors)
 
     def test_selected_path_must_reference_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
