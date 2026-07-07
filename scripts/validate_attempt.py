@@ -23,6 +23,20 @@ REQUIRED_FIELDS = (
     "candidates",
 )
 
+UNICODE_PATH_SEPARATOR_LOOKALIKES = frozenset(
+    (
+        "\u2044",  # fraction slash
+        "\u2215",  # division slash
+        "\u29f8",  # big solidus
+        "\uff0f",  # fullwidth solidus
+        "\u2216",  # set minus
+        "\u29f5",  # reverse solidus operator
+        "\u29f9",  # big reverse solidus
+        "\ufe68",  # small reverse solidus
+        "\uff3c",  # fullwidth reverse solidus
+    )
+)
+
 
 def _is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
@@ -156,6 +170,15 @@ def _attempt_path_has_unicode_format_character(
 ) -> bool:
     if any(unicodedata.category(character) == "Cf" for character in relative_path):
         errors.append(f"{label} must not contain Unicode format characters")
+        return True
+    return False
+
+
+def _attempt_path_has_unicode_separator_lookalike(
+    relative_path: str, label: str, errors: list[str]
+) -> bool:
+    if any(character in UNICODE_PATH_SEPARATOR_LOOKALIKES for character in relative_path):
+        errors.append(f"{label} must not contain Unicode path separator lookalikes")
         return True
     return False
 
@@ -356,6 +379,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             continue
         if _attempt_path_has_unicode_format_character(candidate_path, "candidate path", errors):
             continue
+        if _attempt_path_has_unicode_separator_lookalike(
+            candidate_path, "candidate path", errors
+        ):
+            continue
         if _attempt_path_has_backslash(candidate_path, "candidate path", errors):
             continue
         resolved = _resolve_attempt_path(attempt_root, candidate_path, "candidate path", errors)
@@ -403,6 +430,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             elif _attempt_path_has_control_character(selected_path, "selected_path", errors):
                 pass
             elif _attempt_path_has_unicode_format_character(
+                selected_path, "selected_path", errors
+            ):
+                pass
+            elif _attempt_path_has_unicode_separator_lookalike(
                 selected_path, "selected_path", errors
             ):
                 pass
