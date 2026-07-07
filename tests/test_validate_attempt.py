@@ -501,6 +501,29 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
                 self.assertIn(f"{field} must not contain Unicode format characters", errors)
 
+    def test_core_identity_fields_must_not_have_surrounding_whitespace(self):
+        cases = (
+            ("item_id", " ASSET-0001"),
+            ("attempt_id", "A-0001-001 "),
+            ("task_id", " ASSET-0001-A001"),
+            ("provider", "browser image tool "),
+        )
+        for field, value in cases:
+            with self.subTest(field=field):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = self.attempt_root(tmp)
+                    data = self.valid_manifest(root)
+                    data[field] = value
+                    if field == "task_id":
+                        data["result_binding"] = value
+                        for candidate in data["candidates"]:
+                            candidate["task_id"] = value
+                    manifest_path = self.write_manifest(root, data)
+
+                    errors = validate_manifest(manifest_path)
+
+                self.assertIn(f"{field} must not have leading or trailing whitespace", errors)
+
     def test_attempt_id_must_match_attempt_directory_name(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
@@ -888,6 +911,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertIn("candidate 1 task_id must not contain Unicode format characters", errors)
+
+    def test_candidate_task_id_must_not_have_surrounding_whitespace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][0]["task_id"] = "ASSET-0001-A001 "
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn(
+            "candidate 1 task_id must not have leading or trailing whitespace",
+            errors,
+        )
 
     def test_candidate_task_id_mismatch_is_reported_when_path_duplicates(self):
         with tempfile.TemporaryDirectory() as tmp:

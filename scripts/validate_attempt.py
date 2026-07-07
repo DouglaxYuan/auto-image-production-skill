@@ -52,6 +52,9 @@ def _string_has_unicode_format_character(value: str) -> bool:
 
 def _identity_has_unsafe_character(value: str, label: str, errors: list[str]) -> bool:
     has_error = False
+    if value != value.strip():
+        errors.append(f"{label} must not have leading or trailing whitespace")
+        has_error = True
     if _string_has_control_character(value):
         errors.append(f"{label} must not contain control characters")
         has_error = True
