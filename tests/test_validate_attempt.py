@@ -254,6 +254,23 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertEqual([], errors)
 
+    def test_result_binding_can_reference_task_id_in_metadata_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = {
+                "provider_tasks": {
+                    "ASSET-0001-A001": {
+                        "message_region": "assistant response after submit",
+                    }
+                }
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertEqual([], errors)
+
     def test_result_binding_requires_exact_task_id_token(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)

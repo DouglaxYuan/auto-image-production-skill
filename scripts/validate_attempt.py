@@ -38,7 +38,11 @@ def _binding_references_task(binding: Any, task_id: str) -> bool:
     if isinstance(binding, str):
         return _string_references_task(binding, task_id)
     if isinstance(binding, dict):
-        return any(_binding_references_task(value, task_id) for value in binding.values())
+        return any(
+            _binding_references_task(key, task_id)
+            or _binding_references_task(value, task_id)
+            for key, value in binding.items()
+        )
     if isinstance(binding, list):
         return any(_binding_references_task(value, task_id) for value in binding)
     return False
