@@ -10,6 +10,7 @@ Use this contract for automated image-production workflows.
 - `generation_rules`: visual and workflow rules the model must follow.
 - `provider`: browser image tool or API image model.
 - `candidate_count`: expected number of candidates.
+- `result_binding`: task id, provider id, DOM/message-region rule, or API response field proving candidates belong to this attempt.
 - `validation_rules`: checks required before accepting candidates.
 - `selection_criteria`: how to choose the final image.
 - `commit_target`: final output path, filename pattern, manifest/registry destination.
@@ -45,6 +46,18 @@ Every prompt must include:
 - Preservation rules for the source subject.
 - Style, background, border/template, lighting, composition, and crop requirements.
 - A request to echo the `TASK-ID` in the response when the provider supports text.
+
+The prompt's `TASK-ID` must match the `result_binding` rule recorded for the attempt.
+
+## Attempt Manifest Validation
+
+When an attempt writes a JSON manifest, validate the local bookkeeping before publishing:
+
+```bash
+python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
+```
+
+The validator checks required fields, `candidate_count`, `result_binding`, candidate file paths, candidate task ids, and `selected_path` membership. It does not replace image decoding, OCR, perceptual hashing, or project-specific quality checks.
 
 ## Result Validation
 

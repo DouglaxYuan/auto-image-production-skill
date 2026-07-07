@@ -27,8 +27,9 @@ Treat each requested output as one stable item. The reusable contract is:
 - `item_id`: asset id, content id, campaign id, row id, or any stable unit of work.
 - `source_assets`: source image(s), border/template files, masks, style references, or audit rows.
 - `generation_rules`: visual and workflow rules the output must obey.
-- `prompt_template`: the model-facing prompt with variables filled per item.
+- `prompt` or `prompt_template`: the model-facing prompt with variables filled per item.
 - `provider`: a third-party image model, browser tool, or API adapter.
+- `candidate_count`: expected number of returned candidates.
 - `result_binding`: how to prove returned images belong to this attempt.
 - `validation_rules`: size, format, OCR/text, duplicate, safety, and project-specific checks.
 - `selection_criteria`: how to pick the final image from candidates.
@@ -95,6 +96,7 @@ Adapt these checks to the current project:
 
 ```bash
 git status --short
+python scripts/validate_attempt.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python -m unittest discover -s tests -q
 python -m compileall -q src scripts tests
 sqlite3 path/to/image_pipeline.sqlite 'PRAGMA integrity_check;'

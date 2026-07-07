@@ -43,6 +43,7 @@ Provide these fields as clearly as possible:
 - `generation_rules`: visual and workflow rules the output must follow
 - `provider`: third-party image model or browser/API provider
 - `candidate_count`: expected number of candidates
+- `result_binding`: how to prove returned images belong to the current task or provider task id
 - `validation_rules`: size, OCR/text, duplicate, safety, and quality checks
 - `selection_criteria`: how to pick the final image
 - `commit_target`: final directory, filename pattern, manifest, or registry destination
@@ -58,7 +59,8 @@ source_assets:
 - template image: ./templates/final-frame.png
 provider: browser image tool
 candidate_count: 3
-prompt: Create a clean final image. Preserve the main subject shape and color. Use the provided template. Do not include prohibited text, marks, or unrelated text. Output square 2048x2048 images. Echo TASK-ID.
+result_binding: Accept only images returned after the provider echoes TASK-ID ASSET-0001-A001.
+prompt: "TASK-ID: ASSET-0001-A001. Create a clean final image. Preserve the main subject shape and color. Use the provided template. Do not include prohibited text, marks, or unrelated text. Output exactly 3 square 2048x2048 images. Echo TASK-ID ASSET-0001-A001."
 validation_rules:
 - image decodes successfully
 - selected image is 2048x2048
@@ -104,4 +106,5 @@ Only after candidates pass validation and a final image is selected should the a
 - `SKILL.md`: skill trigger metadata and core workflow
 - `references/prompt-and-output-contract.md`: provider-agnostic prompt/output contract
 - `references/asset-example.md`: neutral example
+- `scripts/validate_attempt.py`: local attempt manifest validator
 - `agents/openai.yaml`: UI metadata for Codex
