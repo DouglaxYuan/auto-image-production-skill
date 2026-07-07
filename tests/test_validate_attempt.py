@@ -16,6 +16,11 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         root.mkdir()
         return root
 
+    def staged_attempt_root(self, tmp):
+        root = Path(tmp) / "ASSET-0001" / ".attempts" / "A-0001-001"
+        root.mkdir(parents=True)
+        return root
+
     def write_manifest(self, root, data):
         manifest_path = root / "attempt.json"
         manifest_path.write_text(json.dumps(data), encoding="utf-8")
@@ -136,6 +141,17 @@ class ValidateAttemptManifestTest(unittest.TestCase):
             errors = validate_manifest(manifest_path)
 
         self.assertIn("attempt_id A-0001-999 does not match attempt directory A-0001-001", errors)
+
+    def test_item_id_must_match_item_directory_in_attempt_layout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.staged_attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["item_id"] = "ASSET-9999"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("item_id ASSET-9999 does not match item directory ASSET-0001", errors)
 
     def test_candidate_count_must_match_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -43,6 +43,13 @@ def _is_relative_to(path: Path, root: Path) -> bool:
     return True
 
 
+def _item_dir_name(manifest_path: Path) -> str | None:
+    attempt_parent = manifest_path.parent.parent
+    if attempt_parent.name not in (".attempts", "attempts"):
+        return None
+    return attempt_parent.parent.name
+
+
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
     try:
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -79,6 +86,11 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
     attempt_id = data.get("attempt_id")
     if _is_non_empty_string(attempt_id) and attempt_id != path.parent.name:
         errors.append(f"attempt_id {attempt_id} does not match attempt directory {path.parent.name}")
+
+    item_id = data.get("item_id")
+    item_dir = _item_dir_name(path)
+    if item_dir and _is_non_empty_string(item_id) and item_id != item_dir:
+        errors.append(f"item_id {item_id} does not match item directory {item_dir}")
 
     task_id = data.get("task_id")
     if not _is_non_empty_string(task_id):
