@@ -162,6 +162,26 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest parent directory is invalid:", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_reports_invalid_manifest_path_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_path = Path(tmp) / "attempt.json"
+            try:
+                manifest_path.symlink_to("attempt.json")
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"symlink unsupported: {exc}")
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest path is invalid:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)

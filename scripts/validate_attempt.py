@@ -60,9 +60,15 @@ def _resolve_attempt_path(attempt_root: Path, relative_path: str, label: str, er
 
 
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
-    if not manifest_path.exists():
+    try:
+        manifest_path.resolve(strict=True)
+    except FileNotFoundError:
         errors.append(f"manifest does not exist: {manifest_path}")
         return None
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(f"manifest path is invalid: {manifest_path} ({exc})")
+        return None
+
     if not manifest_path.is_file():
         errors.append(f"manifest path is not a file: {manifest_path}")
         return None
