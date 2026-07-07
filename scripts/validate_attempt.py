@@ -8,6 +8,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -146,6 +147,15 @@ def _attempt_path_has_repeated_separator(relative_path: str, label: str, errors:
 def _attempt_path_has_control_character(relative_path: str, label: str, errors: list[str]) -> bool:
     if any(0 < ord(character) < 32 or ord(character) == 127 for character in relative_path):
         errors.append(f"{label} must not contain control characters")
+        return True
+    return False
+
+
+def _attempt_path_has_unicode_format_character(
+    relative_path: str, label: str, errors: list[str]
+) -> bool:
+    if any(unicodedata.category(character) == "Cf" for character in relative_path):
+        errors.append(f"{label} must not contain Unicode format characters")
         return True
     return False
 
@@ -344,6 +354,8 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             continue
         if _attempt_path_has_control_character(candidate_path, "candidate path", errors):
             continue
+        if _attempt_path_has_unicode_format_character(candidate_path, "candidate path", errors):
+            continue
         if _attempt_path_has_backslash(candidate_path, "candidate path", errors):
             continue
         resolved = _resolve_attempt_path(attempt_root, candidate_path, "candidate path", errors)
@@ -389,6 +401,10 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             elif _attempt_path_has_repeated_separator(selected_path, "selected_path", errors):
                 pass
             elif _attempt_path_has_control_character(selected_path, "selected_path", errors):
+                pass
+            elif _attempt_path_has_unicode_format_character(
+                selected_path, "selected_path", errors
+            ):
                 pass
             elif _attempt_path_has_backslash(selected_path, "selected_path", errors):
                 pass
