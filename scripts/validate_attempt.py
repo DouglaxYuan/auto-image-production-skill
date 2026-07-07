@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -25,9 +26,17 @@ def _is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _string_references_task(value: str, task_id: str) -> bool:
+    task_pattern = re.escape(task_id)
+    return (
+        re.search(rf"(?<![A-Za-z0-9_-]){task_pattern}(?![A-Za-z0-9_-])", value)
+        is not None
+    )
+
+
 def _binding_references_task(binding: Any, task_id: str) -> bool:
     if isinstance(binding, str):
-        return task_id in binding
+        return _string_references_task(binding, task_id)
     if isinstance(binding, dict):
         return any(_binding_references_task(value, task_id) for value in binding.values())
     if isinstance(binding, list):

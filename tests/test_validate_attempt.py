@@ -209,6 +209,17 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertEqual([], errors)
 
+    def test_result_binding_requires_exact_task_id_token(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            data["result_binding"] = "provider echoed TASK-ID ASSET-0001-A001-extra"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("result_binding does not reference task_id: ASSET-0001-A001", errors)
+
     def test_core_identity_fields_must_be_non_empty_strings(self):
         for field in ("item_id", "attempt_id", "provider"):
             with self.subTest(field=field):
