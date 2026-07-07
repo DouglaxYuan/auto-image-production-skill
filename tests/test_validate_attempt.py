@@ -76,6 +76,21 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate path does not exist: candidate-a.png", errors)
 
+    def test_candidate_paths_must_stay_inside_attempt_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            attempt_root = root / "attempt"
+            attempt_root.mkdir()
+            outside = root / "outside.png"
+            outside.write_bytes(b"png-outside")
+            data = self.valid_manifest(attempt_root)
+            data["candidates"][0]["path"] = "../outside.png"
+            manifest_path = self.write_manifest(attempt_root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate path escapes attempt directory: ../outside.png", errors)
+
     def test_selected_path_must_reference_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

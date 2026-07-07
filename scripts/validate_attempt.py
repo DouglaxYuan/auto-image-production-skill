@@ -52,6 +52,7 @@ def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | N
 def validate_manifest(manifest_path: str | Path) -> list[str]:
     """Return validation errors for an attempt manifest."""
     path = Path(manifest_path)
+    attempt_root = path.parent.resolve()
     errors: list[str] = []
     data = _load_manifest(path, errors)
     if data is None:
@@ -100,6 +101,10 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
         resolved = Path(candidate_path)
         if not resolved.is_absolute():
             resolved = path.parent / resolved
+        resolved = resolved.resolve()
+        if not resolved.is_relative_to(attempt_root):
+            errors.append(f"candidate path escapes attempt directory: {candidate_path}")
+            continue
         if not resolved.is_file():
             errors.append(f"candidate path does not exist: {candidate_path}")
 
