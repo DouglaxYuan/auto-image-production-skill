@@ -51,11 +51,15 @@ def _item_dir_name(manifest_path: Path) -> str | None:
 
 
 def _load_manifest(manifest_path: Path, errors: list[str]) -> dict[str, Any] | None:
-    try:
-        data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
+    if not manifest_path.exists():
         errors.append(f"manifest does not exist: {manifest_path}")
         return None
+    if not manifest_path.is_file():
+        errors.append(f"manifest path is not a file: {manifest_path}")
+        return None
+
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         errors.append(f"manifest is not valid JSON: {exc}")
         return None

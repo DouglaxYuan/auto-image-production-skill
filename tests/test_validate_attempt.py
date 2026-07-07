@@ -91,6 +91,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual("", result.stdout.strip())
         self.assertIn("candidate_count is 3 but candidates has 2 entries", result.stderr)
 
+    def test_cli_reports_directory_path_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), tmp],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest path is not a file:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
