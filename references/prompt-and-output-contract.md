@@ -57,7 +57,7 @@ When an attempt writes a JSON manifest, validate the local bookkeeping before pu
 python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
 
-The validator checks required fields, `candidate_count`, `result_binding`, candidate file paths, candidate path containment inside the attempt directory, duplicate candidate paths, candidate task ids, and `selected_path` membership. It does not replace image decoding, OCR, perceptual hashing, or project-specific quality checks.
+The validator checks required fields, `candidate_count`, `result_binding`, candidate file paths, candidate path containment inside the attempt directory, duplicate candidate paths, candidate task ids, and normalized `selected_path` membership. It does not replace image decoding, OCR, perceptual hashing, or project-specific quality checks.
 
 ## Result Validation
 

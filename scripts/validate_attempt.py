@@ -86,7 +86,6 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
     if "result_binding" in data and task_id and not _binding_references_task(result_binding, task_id):
         errors.append(f"result_binding does not reference task_id: {task_id}")
 
-    candidate_paths: set[str] = set()
     resolved_candidate_paths: set[Path] = set()
     for index, candidate in enumerate(candidates, start=1):
         if not isinstance(candidate, dict):
@@ -98,7 +97,6 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
             errors.append(f"candidate {index} missing path")
             continue
 
-        candidate_paths.add(candidate_path)
         resolved = Path(candidate_path)
         if not resolved.is_absolute():
             resolved = path.parent / resolved
@@ -121,8 +119,15 @@ def validate_manifest(manifest_path: str | Path) -> list[str]:
     if selected_path is not None:
         if not _is_non_empty_string(selected_path):
             errors.append("selected_path must be a non-empty string when present")
-        elif selected_path not in candidate_paths:
-            errors.append(f"selected_path is not listed in candidates: {selected_path}")
+        else:
+            resolved_selected = Path(selected_path)
+            if not resolved_selected.is_absolute():
+                resolved_selected = path.parent / resolved_selected
+            resolved_selected = resolved_selected.resolve()
+            if not resolved_selected.is_relative_to(attempt_root):
+                errors.append(f"selected_path escapes attempt directory: {selected_path}")
+            elif resolved_selected not in resolved_candidate_paths:
+                errors.append(f"selected_path is not listed in candidates: {selected_path}")
 
     return errors
 

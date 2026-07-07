@@ -103,6 +103,18 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("duplicate candidate path: ./candidate-a.png", errors)
 
+    def test_selected_path_matches_candidate_after_resolution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = self.valid_manifest(root)
+            data["candidates"][1]["path"] = "./candidate-b.png"
+            data["selected_path"] = "candidate-b.png"
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertEqual([], errors)
+
     def test_selected_path_must_reference_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
