@@ -434,6 +434,16 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             errors.append(f"candidate {index} missing path")
             continue
 
+        if _attempt_path_has_control_character(candidate_path, "candidate path", errors):
+            continue
+        if _attempt_path_has_unicode_format_character(candidate_path, "candidate path", errors):
+            continue
+        if _attempt_path_has_surrogate_character(candidate_path, "candidate path", errors):
+            continue
+        if _attempt_path_has_unicode_separator_lookalike(
+            candidate_path, "candidate path", errors
+        ):
+            continue
         resolved = Path(candidate_path)
         if resolved.is_absolute():
             errors.append(f"candidate path must be relative: {candidate_path}")
@@ -445,16 +455,6 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         if _attempt_path_has_parent_reference(candidate_path, "candidate path", errors):
             continue
         if _attempt_path_has_repeated_separator(candidate_path, "candidate path", errors):
-            continue
-        if _attempt_path_has_control_character(candidate_path, "candidate path", errors):
-            continue
-        if _attempt_path_has_unicode_format_character(candidate_path, "candidate path", errors):
-            continue
-        if _attempt_path_has_surrogate_character(candidate_path, "candidate path", errors):
-            continue
-        if _attempt_path_has_unicode_separator_lookalike(
-            candidate_path, "candidate path", errors
-        ):
             continue
         if _attempt_path_has_backslash(candidate_path, "candidate path", errors):
             continue
@@ -487,20 +487,7 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         if not _is_non_empty_string(selected_path):
             errors.append("selected_path must be a non-empty string when present")
         else:
-            resolved_selected = Path(selected_path)
-            if resolved_selected.is_absolute():
-                errors.append(f"selected_path must be relative: {selected_path}")
-            elif _attempt_path_has_trailing_separator(selected_path, "selected_path", errors):
-                pass
-            elif _attempt_path_has_current_directory_reference(
-                selected_path, "selected_path", errors
-            ):
-                pass
-            elif _attempt_path_has_parent_reference(selected_path, "selected_path", errors):
-                pass
-            elif _attempt_path_has_repeated_separator(selected_path, "selected_path", errors):
-                pass
-            elif _attempt_path_has_control_character(selected_path, "selected_path", errors):
+            if _attempt_path_has_control_character(selected_path, "selected_path", errors):
                 pass
             elif _attempt_path_has_unicode_format_character(
                 selected_path, "selected_path", errors
@@ -512,30 +499,44 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
                 selected_path, "selected_path", errors
             ):
                 pass
-            elif _attempt_path_has_backslash(selected_path, "selected_path", errors):
-                pass
             else:
-                resolved_selected = _resolve_attempt_path(
-                    attempt_root, selected_path, "selected_path", errors
-                )
-                if resolved_selected is not None:
-                    if _attempt_path_is_symlink(
+                resolved_selected = Path(selected_path)
+                if resolved_selected.is_absolute():
+                    errors.append(f"selected_path must be relative: {selected_path}")
+                elif _attempt_path_has_trailing_separator(selected_path, "selected_path", errors):
+                    pass
+                elif _attempt_path_has_current_directory_reference(
+                    selected_path, "selected_path", errors
+                ):
+                    pass
+                elif _attempt_path_has_parent_reference(selected_path, "selected_path", errors):
+                    pass
+                elif _attempt_path_has_repeated_separator(selected_path, "selected_path", errors):
+                    pass
+                elif _attempt_path_has_backslash(selected_path, "selected_path", errors):
+                    pass
+                else:
+                    resolved_selected = _resolve_attempt_path(
                         attempt_root, selected_path, "selected_path", errors
-                    ):
-                        pass
-                    elif _attempt_path_has_symlinked_directory(
-                        attempt_root, selected_path, "selected_path", errors
-                    ):
-                        pass
-                    elif not _is_relative_to(resolved_selected, attempt_root):
-                        errors.append(f"selected_path escapes attempt directory: {selected_path}")
-                    else:
-                        if not resolved_selected.exists():
-                            errors.append(f"selected_path does not exist: {selected_path}")
-                        elif not resolved_selected.is_file():
-                            errors.append(f"selected_path is not a file: {selected_path}")
-                        if resolved_selected not in resolved_candidate_paths:
-                            errors.append(f"selected_path is not listed in candidates: {selected_path}")
+                    )
+                    if resolved_selected is not None:
+                        if _attempt_path_is_symlink(
+                            attempt_root, selected_path, "selected_path", errors
+                        ):
+                            pass
+                        elif _attempt_path_has_symlinked_directory(
+                            attempt_root, selected_path, "selected_path", errors
+                        ):
+                            pass
+                        elif not _is_relative_to(resolved_selected, attempt_root):
+                            errors.append(f"selected_path escapes attempt directory: {selected_path}")
+                        else:
+                            if not resolved_selected.exists():
+                                errors.append(f"selected_path does not exist: {selected_path}")
+                            elif not resolved_selected.is_file():
+                                errors.append(f"selected_path is not a file: {selected_path}")
+                            if resolved_selected not in resolved_candidate_paths:
+                                errors.append(f"selected_path is not listed in candidates: {selected_path}")
 
     return errors
 
