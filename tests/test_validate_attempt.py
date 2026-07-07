@@ -396,6 +396,18 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn(f"selected_path must be relative: {absolute_path}", errors)
 
+    def test_selected_path_must_be_a_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            (root / "candidate-b.png").unlink()
+            (root / "candidate-b.png").mkdir()
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("selected_path is not a file: candidate-b.png", errors)
+
     def test_selected_path_with_invalid_filesystem_characters_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)

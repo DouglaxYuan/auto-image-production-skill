@@ -201,8 +201,13 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
                 if resolved_selected is not None:
                     if not _is_relative_to(resolved_selected, attempt_root):
                         errors.append(f"selected_path escapes attempt directory: {selected_path}")
-                    elif resolved_selected not in resolved_candidate_paths:
-                        errors.append(f"selected_path is not listed in candidates: {selected_path}")
+                    else:
+                        if not resolved_selected.exists():
+                            errors.append(f"selected_path does not exist: {selected_path}")
+                        elif not resolved_selected.is_file():
+                            errors.append(f"selected_path is not a file: {selected_path}")
+                        if resolved_selected not in resolved_candidate_paths:
+                            errors.append(f"selected_path is not listed in candidates: {selected_path}")
 
     return errors
 
