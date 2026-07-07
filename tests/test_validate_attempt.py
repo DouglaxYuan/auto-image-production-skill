@@ -105,6 +105,23 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest path is not a file:", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_reports_non_utf8_manifest_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_path = Path(tmp) / "attempt.json"
+            manifest_path.write_bytes(b"\xff\xfe")
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest is not valid UTF-8 text:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
