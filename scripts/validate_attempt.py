@@ -50,6 +50,10 @@ def _string_has_unicode_format_character(value: str) -> bool:
     return any(unicodedata.category(character) == "Cf" for character in value)
 
 
+def _string_has_surrogate_character(value: str) -> bool:
+    return any(unicodedata.category(character) == "Cs" for character in value)
+
+
 def _identity_has_unsafe_character(value: str, label: str, errors: list[str]) -> bool:
     has_error = False
     if value != value.strip():
@@ -60,6 +64,9 @@ def _identity_has_unsafe_character(value: str, label: str, errors: list[str]) ->
         has_error = True
     if _string_has_unicode_format_character(value):
         errors.append(f"{label} must not contain Unicode format characters")
+        has_error = True
+    if _string_has_surrogate_character(value):
+        errors.append(f"{label} must not contain surrogate characters")
         has_error = True
     return has_error
 
@@ -195,6 +202,13 @@ def _attempt_path_has_unicode_format_character(
 ) -> bool:
     if _string_has_unicode_format_character(relative_path):
         errors.append(f"{label} must not contain Unicode format characters")
+        return True
+    return False
+
+
+def _attempt_path_has_surrogate_character(relative_path: str, label: str, errors: list[str]) -> bool:
+    if _string_has_surrogate_character(relative_path):
+        errors.append(f"{label} must not contain surrogate characters")
         return True
     return False
 
@@ -413,6 +427,8 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             continue
         if _attempt_path_has_unicode_format_character(candidate_path, "candidate path", errors):
             continue
+        if _attempt_path_has_surrogate_character(candidate_path, "candidate path", errors):
+            continue
         if _attempt_path_has_unicode_separator_lookalike(
             candidate_path, "candidate path", errors
         ):
@@ -466,6 +482,8 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             elif _attempt_path_has_unicode_format_character(
                 selected_path, "selected_path", errors
             ):
+                pass
+            elif _attempt_path_has_surrogate_character(selected_path, "selected_path", errors):
                 pass
             elif _attempt_path_has_unicode_separator_lookalike(
                 selected_path, "selected_path", errors
