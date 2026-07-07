@@ -91,7 +91,13 @@ ITEM/
 
 Only after candidates pass validation and a final image is selected should the attempt be published and `current` moved to the successful attempt. This prevents failed, partial, duplicate, or mismatched images from polluting the final output.
 
-Before publishing a successful attempt, require the manifest to name the selected candidate:
+Validate attempt bookkeeping while the attempt is still staged:
+
+```bash
+python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
+```
+
+Before publishing a successful attempt, also require the manifest to name the selected candidate:
 
 ```bash
 python scripts/validate_attempt.py --require-selected ITEM/.attempts/ATTEMPT_ID/attempt.json
