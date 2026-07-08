@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.validate_attempt import _safe_report_identity_value, validate_manifest  # noqa: E402
+from scripts.validate_attempt import _safe_report_path_value, validate_manifest  # noqa: E402
 from scripts.plan_attempt_recovery import (  # noqa: E402
     POLICIES,
     _next_command_for_action,
@@ -180,10 +180,10 @@ def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) ->
     data = data or {}
     report_errors = _report_errors(errors)
     return {
-        "item_id": _safe_report_identity_value(data.get("item_id")),
-        "attempt_id": _safe_report_identity_value(data.get("attempt_id")),
-        "task_id": _safe_report_identity_value(data.get("task_id")),
-        "provider": _safe_report_identity_value(data.get("provider")),
+        "item_id": _safe_report_path_value(data.get("item_id")),
+        "attempt_id": _safe_report_path_value(data.get("attempt_id")),
+        "task_id": _safe_report_path_value(data.get("task_id")),
+        "provider": _safe_report_path_value(data.get("provider")),
         "status": "failed" if errors else "passed",
         "suggested_error_code": _suggested_error_code(errors),
         "failed_attempt_patch": _failed_attempt_patch(report_errors),

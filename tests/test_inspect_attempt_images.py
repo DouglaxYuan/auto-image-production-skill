@@ -458,6 +458,25 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertIsNone(report.get("provider"))
         self.assertNotIn("doubao\\nbrowser", result.stdout)
 
+    def test_cli_json_redacts_absolute_path_identity_fields_from_scheduler_logs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            absolute_item_id = Path(tmp) / "private" / "asset-id"
+            data = self.valid_manifest(root)
+            data["item_id"] = str(absolute_item_id)
+            data["candidates"][0]["visible_marks"] = ["doubao_ai_generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        report_text = json.dumps(report)
+        self.assertEqual("<path>", report.get("item_id"))
+        self.assertNotIn(str(absolute_item_id), report_text)
+
     def test_cli_json_includes_failed_attempt_patch_for_scheduler_persistence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
