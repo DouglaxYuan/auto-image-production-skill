@@ -94,7 +94,8 @@ def _normalized_status(value: str) -> str:
 
 
 def _normalized_ocr_text(value: str) -> str:
-    return " ".join(value.split()).casefold()
+    separated = re.sub(r"[_-]+", " ", value)
+    return " ".join(separated.split()).casefold()
 
 
 def _candidate_has_ocr_evidence(candidate: dict[str, Any]) -> bool:
