@@ -49,5 +49,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `no_candidates_found`
 - `result_binding_failed`
 - `candidate_validation_failed`
+- `forbidden_ocr_text`
+- `forbidden_visible_mark`
 
 Store failure type and detail on the attempt so a later agent can decide whether to resume, retry, or quarantine.

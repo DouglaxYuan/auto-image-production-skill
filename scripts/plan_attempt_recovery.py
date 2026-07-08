@@ -167,6 +167,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": None,
         "reason": "downloaded candidates failed local quality gates",
     },
+    "forbidden_ocr_text": {
+        "action": "reroute_or_skip",
+        "failure_category": "quality_gate",
+        "retryable": False,
+        "retry_after_seconds": None,
+        "reason": "candidate contains forbidden OCR text",
+    },
     "forbidden_visible_mark": {
         "action": "reroute_provider",
         "failure_category": "quality_gate",

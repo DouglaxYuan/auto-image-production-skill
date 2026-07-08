@@ -221,6 +221,20 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("provider_runtime", plan["failure_category"])
         self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
 
+    def test_cli_classifies_forbidden_ocr_text_as_quality_gate_reroute(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "forbidden_ocr_text"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("reroute_or_skip", plan["action"])
+        self.assertEqual(False, plan["retryable"])
+        self.assertEqual("quality_gate", plan["failure_category"])
+        self.assertEqual(False, plan["requires_operator"])
+        self.assertEqual("route to approved alternate provider or skip", plan["next_command"])
+
     def test_cli_normalizes_error_code_separators_for_policy_lookup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
