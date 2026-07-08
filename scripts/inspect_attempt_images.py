@@ -84,6 +84,10 @@ def _normalized_status(value: str) -> str:
     return value.strip().casefold()
 
 
+def _normalized_ocr_text(value: str) -> str:
+    return value.strip().casefold()
+
+
 def _candidate_has_ocr_evidence(candidate: dict[str, Any]) -> bool:
     return isinstance(candidate.get("ocr_status"), str) or isinstance(candidate.get("ocr_text"), str)
 
@@ -109,9 +113,10 @@ def _validate_candidate_ocr(
             errors.append(
                 f"candidate {index} contains OCR text while reject_any_ocr_text is enabled"
             )
-        normalized_text = ocr_text.casefold()
+        normalized_text = _normalized_ocr_text(ocr_text)
         for forbidden in _string_list(rules.get("forbidden_ocr_text")):
-            if forbidden.casefold() in normalized_text:
+            normalized_forbidden = _normalized_ocr_text(forbidden)
+            if normalized_forbidden and normalized_forbidden in normalized_text:
                 errors.append(f"candidate {index} contains forbidden OCR text: {forbidden}")
 
 

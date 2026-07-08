@@ -179,6 +179,21 @@ class InspectAttemptImagesTest(unittest.TestCase):
             result.stderr,
         )
 
+    def test_cli_normalizes_forbidden_ocr_text_patterns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["forbidden_ocr_text"] = [" SALE "]
+            data["candidates"][0]["ocr_status"] = "passed"
+            data["candidates"][0]["ocr_text"] = "summer sale"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("candidate 1 contains forbidden OCR text:  SALE ", result.stderr)
+
     def test_cli_rejects_ocr_text_that_conflicts_with_no_text_status(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

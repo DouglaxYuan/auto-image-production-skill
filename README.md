@@ -143,8 +143,8 @@ python scripts/inspect_attempt_images.py --require-size 2048x2048 ITEM/.attempts
 The image inspection step decodes each candidate, checks exact dimensions when requested,
 rejects duplicate candidate bytes, and enforces recorded OCR/visible-mark evidence such as
 `quality_rules.reject_any_ocr_text` and `quality_rules.forbidden_visible_marks`.
-OCR status checks trim whitespace and match case-insensitively, but statuses
-that claim no text must not include non-empty `ocr_text`.
+OCR status and forbidden-text checks trim whitespace and match case-insensitively,
+but statuses that claim no text must not include non-empty `ocr_text`.
 Visible-mark checks trim whitespace and match case-insensitively.
 It is only for attempts with downloaded candidate files; failed zero-candidate
 attempts should pass manifest validation but fail image inspection.
