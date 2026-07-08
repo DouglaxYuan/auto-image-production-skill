@@ -104,6 +104,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 120,
         "reason": "provider did not return candidates before timeout",
     },
+    "no_candidates_found": {
+        "action": "retry",
+        "failure_category": "provider_runtime",
+        "retryable": True,
+        "retry_after_seconds": 120,
+        "reason": "provider returned no usable image candidates",
+    },
     "upload_not_ready": {
         "action": "retry",
         "failure_category": "network",

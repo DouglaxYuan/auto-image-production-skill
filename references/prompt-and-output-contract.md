@@ -86,7 +86,7 @@ For provider interruptions such as CAPTCHA, quota, provider-busy responses, brow
 
 Then run `plan_attempt_recovery.py` to classify the next action. It should route
 interactive verification and login-required sessions to `needs_human`, transient
-browser crashes, page load, network, upload, download, and timeout failures to `retry`,
+browser crashes, page load, network, upload, download, no-candidate, and timeout failures to `retry`,
 provider-busy responses, model rate limits, and concurrency pressure to
 `backoff`, missing UI selectors to `review_failure`, and quality/provider mark
 failures to reroute or quarantine actions.

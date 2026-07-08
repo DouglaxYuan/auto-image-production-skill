@@ -46,6 +46,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `download_failed`
 - `download_timeout`
 - `generation_timeout`
+- `no_candidates_found`
 - `result_binding_failed`
 - `candidate_validation_failed`
 
