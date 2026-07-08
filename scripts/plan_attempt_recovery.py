@@ -310,7 +310,8 @@ def _next_retry_count(data: dict[str, Any]) -> int:
 def _normalized_error_code(value: Any) -> Any:
     if not isinstance(value, str):
         return value
-    return "_".join(value.replace("-", " ").split()).casefold()
+    separated = re.sub(r"[\-\u2010-\u2015]+", " ", value)
+    return "_".join(separated.split()).casefold()
 
 
 def _retry_after_seconds(policy: dict[str, Any], data: dict[str, Any]) -> Any:

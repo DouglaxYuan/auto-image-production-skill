@@ -304,6 +304,19 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("Network-Error", plan["error_code"])
         self.assertEqual("network", plan["failure_category"])
 
+    def test_cli_normalizes_error_code_unicode_dashes_for_policy_lookup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "Rate\u2011Limited"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("backoff", plan["action"])
+        self.assertEqual(True, plan["retryable"])
+        self.assertEqual("Rate\u2011Limited", plan["error_code"])
+        self.assertEqual("capacity", plan["failure_category"])
+
     def test_cli_reports_normalized_error_code_for_failed_attempts(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
