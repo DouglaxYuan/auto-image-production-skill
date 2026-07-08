@@ -235,10 +235,10 @@ def _positive_int(value: str) -> int:
 
 def _base_plan(data: dict[str, Any]) -> dict[str, Any]:
     return {
-        "item_id": data.get("item_id"),
-        "attempt_id": data.get("attempt_id"),
-        "task_id": data.get("task_id"),
-        "status": data.get("status", "candidate_available"),
+        "item_id": _safe_report_text_value(data.get("item_id")),
+        "attempt_id": _safe_report_text_value(data.get("attempt_id")),
+        "task_id": _safe_report_text_value(data.get("task_id")),
+        "status": _safe_report_text_value(data.get("status", "candidate_available")),
         "error_code": _safe_report_text_value(data.get("error_code")),
         "retry_count": data.get("retry_count", 0),
     }

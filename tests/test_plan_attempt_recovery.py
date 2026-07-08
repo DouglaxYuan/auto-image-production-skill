@@ -539,3 +539,21 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("<path>", plan["error_code"])
         self.assertEqual("<path>", plan["normalized_error_code"])
         self.assertNotIn(str(absolute_error_code), plan_text)
+
+    def test_cli_redacts_absolute_path_identity_fields_from_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            absolute_item_id = Path(tmp) / "private" / "asset-id"
+            data = self.failed_manifest(root, "network_error")
+            data["item_id"] = str(absolute_item_id)
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        plan = json.loads(result.stdout)
+        plan_text = json.dumps(plan)
+        self.assertEqual("<path>", plan["item_id"])
+        self.assertNotIn(str(absolute_item_id), plan_text)
