@@ -649,7 +649,7 @@ class InspectAttemptImagesTest(unittest.TestCase):
 
             result = self.run_script("--json", manifest_path)
 
-        self.assertEqual(1, result.returncode)
+        self.assertEqual(0, result.returncode)
         report = json.loads(result.stdout)
         self.assertEqual("generation_timeout", report["suggested_error_code"])
         self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
@@ -675,7 +675,7 @@ class InspectAttemptImagesTest(unittest.TestCase):
 
             result = self.run_script("--json", manifest_path)
 
-        self.assertEqual(1, result.returncode)
+        self.assertEqual(0, result.returncode)
         report = json.loads(result.stdout)
         self.assertEqual("browser_control_unavailable", report["suggested_error_code"])
         self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
@@ -700,7 +700,7 @@ class InspectAttemptImagesTest(unittest.TestCase):
 
             result = self.run_script("--json", manifest_path)
 
-        self.assertEqual(1, result.returncode)
+        self.assertEqual(0, result.returncode)
         report = json.loads(result.stdout)
         self.assertEqual("captcha_required", report["suggested_error_code"])
         self.assertEqual("needs_human", report["recovery_hint"]["action"])

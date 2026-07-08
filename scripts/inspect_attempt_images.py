@@ -229,6 +229,14 @@ def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) ->
     }
 
 
+def _json_exit_code(errors: list[str], data: dict[str, Any] | None = None) -> int:
+    if not errors:
+        return 0
+    if _manifest_failed_error_code(errors, data) is not None:
+        return 0
+    return 1
+
+
 def _validate_candidate_ocr(
     index: int, candidate: dict[str, Any], rules: dict[str, Any], errors: list[str]
 ) -> None:
@@ -344,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         data = _load_json(Path(args.manifest))
         print(json.dumps(_inspection_report(errors, data), ensure_ascii=False, sort_keys=True))
-        return 1 if errors else 0
+        return _json_exit_code(errors, data)
 
     if errors:
         for error in _report_errors(errors):
