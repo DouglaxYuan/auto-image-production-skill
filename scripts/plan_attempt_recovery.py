@@ -177,6 +177,10 @@ def _next_command_for_action(action: Any) -> str:
     return "inspect the failed attempt manifest"
 
 
+def _requires_operator(action: Any) -> bool:
+    return action in {"needs_human", "quarantine", "review_failure"}
+
+
 def plan_attempt_recovery(
     manifest_path: str | Path, *, max_retries: int = 3
 ) -> tuple[dict[str, Any] | None, list[str]]:
@@ -197,6 +201,7 @@ def plan_attempt_recovery(
                     "failure_category": "unknown",
                     "retryable": False,
                     "retry_after_seconds": None,
+                    "requires_operator": True,
                     "reason": "unrecognized provider failure code",
                     "next_command": "inspect the failed attempt manifest",
                 }
@@ -204,6 +209,7 @@ def plan_attempt_recovery(
         else:
             plan.update(policy)
             plan["next_command"] = _next_command_for_action(plan.get("action"))
+            plan["requires_operator"] = _requires_operator(plan.get("action"))
             if policy.get("retryable"):
                 remaining_retries = _remaining_retries(data, max_retries)
                 plan["max_retries"] = max_retries
@@ -217,6 +223,7 @@ def plan_attempt_recovery(
                         "action": "review_failure",
                         "retryable": False,
                         "retry_after_seconds": None,
+                        "requires_operator": True,
                         "reason": "retry budget exhausted",
                         "next_command": "review failed attempt before retrying",
                     }
@@ -228,6 +235,7 @@ def plan_attempt_recovery(
             "action": "inspect_images",
             "retryable": False,
             "retry_after_seconds": None,
+            "requires_operator": False,
             "reason": "attempt has candidate files that need local quality inspection",
             "next_command": "python scripts/inspect_attempt_images.py",
         }

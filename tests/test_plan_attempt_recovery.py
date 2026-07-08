@@ -55,6 +55,17 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("captcha_required", plan["error_code"])
         self.assertEqual("request human intervention", plan["next_command"])
 
+    def test_cli_marks_captcha_as_requiring_operator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "captcha_required"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertIn("requires_operator", plan)
+        self.assertEqual(True, plan["requires_operator"])
+
     def test_cli_classifies_concurrency_limit_as_backoff(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
@@ -79,6 +90,17 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual(True, plan["retryable"])
         self.assertGreaterEqual(plan["retry_after_seconds"], 30)
         self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
+
+    def test_cli_marks_network_retry_as_not_requiring_operator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "network_error"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertIn("requires_operator", plan)
+        self.assertEqual(False, plan["requires_operator"])
 
     def test_cli_reports_failure_category_for_retryable_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -147,6 +169,23 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("review_failure", plan["action"])
         self.assertEqual(False, plan["retryable"])
         self.assertEqual("retry budget exhausted", plan["reason"])
+
+    def test_cli_marks_exhausted_retry_budget_as_requiring_operator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.failed_manifest(root, "network_error")
+            data["retry_count"] = 3
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--max-retries", "3", manifest_path)
+            self.assertEqual("", result.stderr.strip())
+            self.assertEqual(0, result.returncode)
+            plan = json.loads(result.stdout)
+
+        self.assertEqual("review_failure", plan["action"])
+        self.assertIn("requires_operator", plan)
+        self.assertEqual(True, plan["requires_operator"])
 
     def test_cli_keeps_retryable_failure_when_retry_budget_remains(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -117,6 +117,8 @@ inspection. For retryable failures, respect the returned `retry_after_seconds`;
 it increases with `retry_count` and is capped at one hour. Use
 `next_retry_count` when writing the next retry manifest. Use
 `failure_category` to route logs and alerts without parsing free-form reasons.
+If `requires_operator` is true, stop automatic retries and put the item in a
+human decision queue.
 
 ## Hard Stops
 
