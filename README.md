@@ -1,5 +1,99 @@
 # Auto Image Production
 
+## 中文简介
+
+`auto-image-production` 是一个用于自动化图片生产的 Codex skill。它帮助
+AI agent 把用户提供的素材、提示词、第三方图像模型输出、校验规则、选择标准
+和最终落盘路径，串成一条可审计、可恢复、可持续运行的图片生产流程。
+
+这个项目的重点不是“调用某一个模型生成图片”，而是把图片生产中容易中断的环节
+工程化：确认任务信息是否完整，确保返回图属于当前任务，记录失败原因，处理网络
+抖动、并发限制、登录状态、OCR/文字残留、尺寸和重复图问题，并在通过校验后再把
+结果原子提交到最终目录。
+
+## 解决什么问题
+
+- 避免任务信息缺失导致 agent 中途停下反问。
+- 避免从浏览器页面抓到历史图片或不属于当前任务的旧结果。
+- 避免把失败、半下载、尺寸错误、重复、带禁用文字或来源标记的图片写入最终目录。
+- 让 CAPTCHA、登录过期、网络错误、模型繁忙、限流和并发限制都进入结构化恢复流程。
+- 让长时间自动化运行可以根据错误类型重试、退避、转人工、拒收或切换合规 provider。
+
+## 技术架构
+
+- Codex skill：`SKILL.md` 定义触发条件和执行流程。
+- Prompt/output contract：`references/prompt-and-output-contract.md` 定义任务输入、provider 输出、候选图和 manifest 格式。
+- Atomic attempt directory：每轮生成先进入 `.attempts/ATTEMPT_ID`，校验通过后再发布到 `attempts/ATTEMPT_ID`。
+- Validation scripts：`scripts/validate_attempt.py`、`scripts/inspect_attempt_images.py`、`scripts/plan_attempt_recovery.py` 分别负责 manifest 校验、候选图检查和失败恢复规划。
+- Tests：`tests/` 覆盖 manifest、安全路径、OCR/可见标记、重试退避、人工介入和 JSON 诊断输出。
+
+## 快速开始
+
+把仓库安装到 Codex skills 目录：
+
+```bash
+mkdir -p ~/.codex/skills
+git clone https://github.com/lightbulingling/auto-image-production-skill.git ~/.codex/skills/auto-image-production
+```
+
+开启新的 Codex 会话后可以这样调用：
+
+```text
+Use $auto-image-production to generate final images.
+
+item_id: ASSET-0001
+source_assets:
+- ./input/ASSET-0001.png
+provider: browser image tool
+candidate_count: 3
+result_binding: Accept only images returned after TASK-ID ASSET-0001-A001.
+prompt: "TASK-ID: ASSET-0001-A001. Create a clean final image. Preserve the subject. Do not include unrelated text or marks."
+validation_rules:
+- selected image must decode successfully
+- OCR must find no prohibited text
+- no third-party provenance mark or AI-generated watermark
+selection_criteria:
+- complete subject visible
+- clean background
+- least distortion
+commit_target: ./generated/selected/ASSET-0001__selected.png
+```
+
+## 需要提供的信息
+
+一次可自动闭环的任务至少需要这些信息：
+
+- `item_id`：稳定任务编号，例如素材 id、行号、内容 id 或营销图 id。
+- `source_assets`：输入图、模板、边框、遮罩、风格参考或源数据行。
+- `prompt`：明确的提示词或提示词模板。
+- `generation_rules`：画面和流程规则。
+- `provider`：浏览器工具、API 模型或内部 provider 名称。
+- `candidate_count`：期望候选图数量。
+- `result_binding`：如何证明返回图片属于当前任务，例如唯一 `TASK-ID` 或 provider task id。
+- `validation_rules`：尺寸、OCR/文字、重复、安全和质量检查。
+- `selection_criteria`：最终选图标准。
+- `commit_target`：最终目录、文件名、manifest 或 registry 目标。
+
+## 环境变量与登录态
+
+当前仓库本身没有必填环境变量。不同 provider adapter 可能需要 API key、
+浏览器登录态或服务地址，这些信息必须放在仓库外部，例如本机 keychain、CI
+secrets、被 `.gitignore` 排除的 `.env.local`，或 provider 自己的安全配置中。
+
+不要把 cookie、token、API key、浏览器 profile、客户素材、本机绝对路径或未脱敏
+运行日志提交到公开仓库。公开示例应使用中性素材、合成编号和通用 provider 名称。
+
+## 给 AI Agent 的快速指令
+
+如果你是 OpenClaw、Codex 或其他自动化 agent，请先读取 `SKILL.md` 和
+`references/prompt-and-output-contract.md`，确认用户给齐 `item_id`、
+`source_assets`、`prompt`、`provider`、`candidate_count`、`result_binding`、
+`validation_rules`、`selection_criteria` 和 `commit_target`；生成结果必须绑定
+唯一任务 id，下载候选图后先运行 manifest 和图片检查，失败时记录结构化
+`error_code` 并调用恢复规划，不要自动移除第三方来源标识或 AI 生成水印。
+
+## English Overview
+
 `auto-image-production` is a Codex skill for automated image-production workflows. It helps an agent turn user-provided output rules, prompts, source assets, third-party image models, validation rules, selection standards, and target paths into auditable final images.
 
 The skill is provider-agnostic. Browser-based image tools and API image models can all be used if they can return candidates that are bound to the current task.
@@ -12,6 +106,8 @@ The skill is provider-agnostic. Browser-based image tools and API image models c
 - [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Version comparison, zh-CN](docs/version-comparison.zh-CN.md)
+- [GitHub publication guide, zh-CN](docs/github-publication.zh-CN.md)
+- [MIT license](LICENSE)
 
 ## What It Does
 
@@ -220,9 +316,7 @@ documented without private account data.
 
 ## License
 
-No open-source license has been selected in this repository yet. The repository
-can be reviewed publicly, but reuse and redistribution rights should be confirmed
-by the repository owner before a license file is added.
+This public repository is released under the [MIT License](LICENSE).
 
 ## Files
 

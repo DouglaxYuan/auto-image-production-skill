@@ -6,10 +6,12 @@
 
 - 最早可验证版本：git 根提交 `75d868d5b579585f050fa38ba20ca57ac672a87e`
   (`v1.0.0`, `Initial public auto image production skill`)。
-- 当前维护分支：`maintenance/attempt-manifest-validator`，当前提交
-  `637b21a` (`feat: persist failed inspection outcomes`)。
-- 用户提供的旧会话 ID 已尝试读取，但本地 Codex 线程索引未找到可读取记录。
-  因此本文只使用 git 历史和当前仓库文件作为事实来源。
+- 当前维护分支：`maintenance/attempt-manifest-validator`。本文比较该分支相对
+  根提交已经落地的功能、测试和公开文档能力，具体最新提交以 `git log` 为准。
+- 已复核本地旧 Codex 会话中关于 GitHub 公开仓库文档规范的要求，只提取可公开
+  复用的规则：中文优先、公开仓库使用 MIT、README 要讲清用途/技术栈/使用方式、
+  说明用户需要提供的信息和环境变量、提供 AI Agent 快速指令，并避免泄露内部会话、
+  路径、账号或密钥。
 
 如果“朋友最早版本”另有未提交代码或私有文档，需要补充该版本文件后才能继续做逐行对比。
 
@@ -35,6 +37,7 @@
 | 报告脱敏 | 未系统说明 | JSON 报告会把本机绝对路径脱敏为 `<path>`，并限制 display-safe identity 字段 |
 | 公开示例 | 早期 `main` 曾含更具体的 marketplace/Doubao 语境 | 当前分支改为中性的 `ASSET-0001` 示例，适合公开仓库复用 |
 | 测试覆盖 | 没有测试脚本 | 新增 `tests/`，覆盖 manifest validator、recovery planner、image inspector |
+| GitHub 公开文档 | README 较轻，缺少公开发布清单和许可落点 | README 改为中文优先，补用途、技术架构、输入字段、环境变量、AI Agent 快速指令、MIT License 和发布规范清单 |
 
 ## 对 Doubao / 浏览器 provider 的改进含义
 
@@ -50,9 +53,11 @@
 - 新增 `CHANGELOG.md`，方便 GitHub 读者追踪版本变化。
 - 新增 `CONTRIBUTING.md`，说明测试命令、文档规范和 PR 检查项。
 - 新增 `SECURITY.md`，说明不要公开提交密钥、cookie、私有图片、浏览器状态或未脱敏日志。
+- 新增 `LICENSE`，公开仓库按 MIT License 发布。
+- 新增 `docs/github-publication.zh-CN.md`，沉淀公开仓库 README、license、脱敏、
+  环境变量和 AI Agent 快速检查规范。
 
 ## 仍需确认
 
-- 许可证尚未选择；公开可读不等于自动授予复用和再分发权利。
-- 用户提供的旧会话当前不可读取，不能作为事实来源。
 - 仓库当前主要提供 Codex skill、契约、验证脚本和测试；完整 Doubao 浏览器 adapter 仍应作为独立实现继续补充。
+- “朋友最早版本”如果不是 git 根提交，而是另有未提交目录或私有压缩包，需要补充原始文件后才能继续逐行对比。

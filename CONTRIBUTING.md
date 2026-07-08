@@ -23,6 +23,8 @@ checks, then mention the missing validator in the pull request.
 ## Documentation Standards
 
 - Prefer clear Markdown headings, short paragraphs, and runnable command blocks.
+- For public GitHub docs, write the main project explanation in Chinese first
+  and keep English as a companion section when useful.
 - Use neutral ids such as `ASSET-0001` in public examples.
 - Document failure behavior as structured states, not as free-form anecdotes.
 - Do not include screenshots or logs that expose account names, cookies, tokens,

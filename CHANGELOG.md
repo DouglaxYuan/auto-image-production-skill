@@ -11,6 +11,15 @@ All notable changes to this repository are documented here. Dates use
 - Contribution and security policies for public GitHub use.
 - Chinese version-comparison notes covering the earliest recoverable repository
   baseline and the current maintenance branch.
+- Chinese-first public README sections covering project value, architecture,
+  quickstart, required inputs, environment-variable guidance, and AI Agent use.
+- MIT `LICENSE` for public reuse and redistribution.
+- GitHub publication checklist in `docs/github-publication.zh-CN.md`.
+
+### Changed
+
+- Updated the license status from pending owner confirmation to MIT for this
+  public repository.
 
 ## 2026-07-08 - Maintenance Branch
 
