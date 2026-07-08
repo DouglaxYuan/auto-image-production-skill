@@ -521,3 +521,21 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual(True, plan["requires_operator"])
         self.assertIn("<path>", plan_text)
         self.assertNotIn(str(missing_manifest), plan_text)
+
+    def test_cli_redacts_absolute_path_error_codes_from_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            absolute_error_code = Path(tmp) / "provider" / "error-code"
+            data = self.failed_manifest(root, str(absolute_error_code))
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        plan = json.loads(result.stdout)
+        plan_text = json.dumps(plan)
+        self.assertEqual("<path>", plan["error_code"])
+        self.assertEqual("<path>", plan["normalized_error_code"])
+        self.assertNotIn(str(absolute_error_code), plan_text)

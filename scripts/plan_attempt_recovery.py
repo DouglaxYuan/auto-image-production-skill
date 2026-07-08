@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -238,7 +239,7 @@ def _base_plan(data: dict[str, Any]) -> dict[str, Any]:
         "attempt_id": data.get("attempt_id"),
         "task_id": data.get("task_id"),
         "status": data.get("status", "candidate_available"),
-        "error_code": data.get("error_code"),
+        "error_code": _safe_report_text_value(data.get("error_code")),
         "retry_count": data.get("retry_count", 0),
     }
 
@@ -247,8 +248,23 @@ def _redact_local_paths(value: str) -> str:
     return ABSOLUTE_PATH_PATTERN.sub("<path>", value)
 
 
+def _replace_unsafe_display_characters(value: str) -> str:
+    return "".join(
+        " " if unicodedata.category(character) in {"Cc", "Cf", "Cs"} else character
+        for character in value
+    )
+
+
+def _safe_report_text_value(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    redacted = _redact_local_paths(value)
+    safe_value = _replace_unsafe_display_characters(redacted)
+    return " ".join(safe_value.split())
+
+
 def _report_errors(errors: list[str]) -> list[str]:
-    return [_redact_local_paths(error) for error in errors]
+    return [_safe_report_text_value(error) for error in errors]
 
 
 def _validation_error_plan(errors: list[str]) -> dict[str, Any]:
@@ -336,7 +352,7 @@ def plan_attempt_recovery(
     if data.get("status") == "failed":
         error_code = data.get("error_code")
         normalized_error_code = _normalized_error_code(error_code)
-        plan["normalized_error_code"] = normalized_error_code
+        plan["normalized_error_code"] = _safe_report_text_value(normalized_error_code)
         policy = POLICIES.get(normalized_error_code)
         if policy is None:
             plan.update(
