@@ -639,6 +639,31 @@ class InspectAttemptImagesTest(unittest.TestCase):
                 "task_id": "ASSET-0001-A001",
                 "provider": "doubao browser",
                 "status": "failed",
+                "error_code": "generation_timeout",
+                "error_detail": "Provider did not return candidates before timeout.",
+                "candidate_count": 0,
+                "result_binding": "TASK-ID ASSET-0001-A001 failed before candidates",
+                "candidates": [],
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertEqual("generation_timeout", report["suggested_error_code"])
+        self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
+
+    def test_cli_json_preserves_captcha_failure_for_zero_candidate_attempt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = {
+                "item_id": "ASSET-0001",
+                "attempt_id": "A-0001-001",
+                "task_id": "ASSET-0001-A001",
+                "provider": "doubao browser",
+                "status": "failed",
                 "error_code": "captcha_required",
                 "error_detail": "Provider requested interactive CAPTCHA before download.",
                 "candidate_count": 0,
@@ -651,8 +676,10 @@ class InspectAttemptImagesTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode)
         report = json.loads(result.stdout)
-        self.assertEqual("no_candidates_found", report["suggested_error_code"])
-        self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
+        self.assertEqual("captcha_required", report["suggested_error_code"])
+        self.assertEqual("needs_human", report["recovery_hint"]["action"])
+        self.assertEqual(False, report["recovery_hint"]["retryable"])
+        self.assertEqual(True, report["recovery_hint"]["requires_operator"])
 
     def test_cli_json_omits_recovery_hint_when_images_pass(self):
         with tempfile.TemporaryDirectory() as tmp:

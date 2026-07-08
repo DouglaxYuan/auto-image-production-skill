@@ -26,12 +26,14 @@ from scripts.validate_attempt import _safe_report_path_value, validate_manifest 
 from scripts.plan_attempt_recovery import (  # noqa: E402
     POLICIES,
     _next_command_for_action,
+    _normalized_error_code,
     _requires_operator,
 )
 
 
 NO_TEXT_OCR_STATUSES = frozenset(("no_text", "text_absent", "clear"))
 PASSING_OCR_STATUSES = frozenset(("passed", *NO_TEXT_OCR_STATUSES))
+NO_CANDIDATE_ERROR = "attempt has no candidate images to inspect"
 ABSOLUTE_PATH_PATTERN = re.compile(r"(?<![\w<])/(?:[^\s;:(),]+/?)+")
 
 
@@ -103,9 +105,25 @@ def _candidate_has_ocr_evidence(candidate: dict[str, Any]) -> bool:
     return isinstance(candidate.get("ocr_status"), str) or isinstance(candidate.get("ocr_text"), str)
 
 
-def _suggested_error_code(errors: list[str]) -> str | None:
+def _manifest_failed_error_code(errors: list[str], data: dict[str, Any] | None) -> str | None:
+    if not any(NO_CANDIDATE_ERROR in error for error in errors):
+        return None
+    if not isinstance(data, dict) or data.get("status") != "failed":
+        return None
+
+    normalized_error_code = _normalized_error_code(data.get("error_code"))
+    if isinstance(normalized_error_code, str) and normalized_error_code in POLICIES:
+        return normalized_error_code
+    return None
+
+
+def _suggested_error_code(errors: list[str], data: dict[str, Any] | None = None) -> str | None:
     if not errors:
         return None
+
+    manifest_error_code = _manifest_failed_error_code(errors, data)
+    if manifest_error_code is not None:
+        return manifest_error_code
 
     prioritized_error_codes = (
         ("missing required field:", "attempt_manifest_invalid"),
@@ -122,7 +140,7 @@ def _suggested_error_code(errors: list[str]) -> str | None:
         ("contains OCR text while reject_any_ocr_text is enabled", "ocr_text_detected"),
         ("OCR status is not passing", "ocr_status_failed"),
         ("conflicts with non-empty OCR text", "ocr_status_failed"),
-        ("attempt has no candidate images to inspect", "no_candidates_found"),
+        (NO_CANDIDATE_ERROR, "no_candidates_found"),
     )
     for needle, error_code in prioritized_error_codes:
         if any(needle in error for error in errors):
@@ -130,8 +148,8 @@ def _suggested_error_code(errors: list[str]) -> str | None:
     return "candidate_validation_failed"
 
 
-def _failed_attempt_patch(errors: list[str]) -> dict[str, str] | None:
-    error_code = _suggested_error_code(errors)
+def _failed_attempt_patch(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, str] | None:
+    error_code = _suggested_error_code(errors, data)
     if error_code is None:
         return None
     return {
@@ -161,8 +179,8 @@ def _report_errors(errors: list[str]) -> list[str]:
     return [_safe_report_error_value(error) for error in errors]
 
 
-def _recovery_hint(errors: list[str]) -> dict[str, Any] | None:
-    error_code = _suggested_error_code(errors)
+def _recovery_hint(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    error_code = _suggested_error_code(errors, data)
     if error_code is None:
         return None
     policy = POLICIES.get(error_code)
@@ -191,9 +209,9 @@ def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) ->
         "task_id": _safe_report_path_value(data.get("task_id")),
         "provider": _safe_report_path_value(data.get("provider")),
         "status": "failed" if errors else "passed",
-        "suggested_error_code": _suggested_error_code(errors),
-        "failed_attempt_patch": _failed_attempt_patch(report_errors),
-        "recovery_hint": _recovery_hint(errors),
+        "suggested_error_code": _suggested_error_code(errors, data),
+        "failed_attempt_patch": _failed_attempt_patch(report_errors, data),
+        "recovery_hint": _recovery_hint(errors, data),
         "errors": report_errors,
     }
 
