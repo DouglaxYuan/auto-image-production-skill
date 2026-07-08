@@ -44,6 +44,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `upload_failed`
 - `send_failed`
 - `download_failed`
+- `download_timeout`
 - `generation_timeout`
 - `result_binding_failed`
 - `candidate_validation_failed`

@@ -132,6 +132,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 60,
         "reason": "candidate download failed",
     },
+    "download_timeout": {
+        "action": "retry",
+        "failure_category": "network",
+        "retryable": True,
+        "retry_after_seconds": 60,
+        "reason": "candidate download timed out",
+    },
     "result_binding_failed": {
         "action": "retry_with_new_task",
         "failure_category": "result_integrity",
