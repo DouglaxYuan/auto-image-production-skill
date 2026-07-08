@@ -421,6 +421,22 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual("ASSET-0001-A001", report.get("task_id"))
         self.assertEqual("browser image tool", report.get("provider"))
 
+    def test_cli_json_omits_unsafe_identity_fields_from_scheduler_logs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["provider"] = "doubao\nbrowser"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertIsNone(report.get("provider"))
+        self.assertNotIn("doubao\\nbrowser", result.stdout)
+
     def test_cli_json_includes_failed_attempt_patch_for_scheduler_persistence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
