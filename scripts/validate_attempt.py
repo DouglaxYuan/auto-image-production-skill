@@ -683,7 +683,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if errors:
         for error in errors:
-            print(error, file=sys.stderr)
+            print(_redact_local_paths(error), file=sys.stderr)
         return 1
 
     print("attempt manifest valid")

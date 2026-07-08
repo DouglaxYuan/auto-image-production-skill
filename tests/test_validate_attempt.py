@@ -144,6 +144,22 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("<path>", report_text)
         self.assertNotIn(str(missing_manifest), report_text)
 
+    def test_cli_stderr_redacts_missing_manifest_absolute_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_manifest = Path(tmp) / "private" / "A-0001-001" / "attempt.json"
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), str(missing_manifest)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("<path>", result.stderr)
+        self.assertNotIn(str(missing_manifest), result.stderr)
+
     def test_cli_json_redacts_absolute_selected_path_from_report(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
