@@ -51,6 +51,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `candidate_validation_failed`
 - `forbidden_ocr_text`
 - `missing_ocr_evidence`
+- `ocr_text_detected`
 - `forbidden_visible_mark`
 
 Store failure type and detail on the attempt so a later agent can decide whether to resume, retry, or quarantine.

@@ -88,7 +88,7 @@ When moving from one image provider to another, keep the local contract unchange
 
 - The provider must accept source asset attachment(s), generation rules, prompt text, and a TASK-ID.
 - The provider adapter must return exactly the candidate images for the active task, not a page-wide scrape.
-- The adapter must expose clear failure types such as `captcha_required`, `browser_session_not_authenticated`, `login_required`, `quota_exhausted`, `concurrency_limited`, `rate_limited`, `provider_busy`, `network_error`, `page_load_failed`, `browser_crashed`, `selector_not_found`, `moderation_blocked`, `upload_not_ready`, `upload_failed`, `send_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `result_binding_failed`, `candidate_validation_failed`, `forbidden_ocr_text`, `missing_ocr_evidence`, and `forbidden_visible_mark`.
+- The adapter must expose clear failure types such as `captcha_required`, `browser_session_not_authenticated`, `login_required`, `quota_exhausted`, `concurrency_limited`, `rate_limited`, `provider_busy`, `network_error`, `page_load_failed`, `browser_crashed`, `selector_not_found`, `moderation_blocked`, `upload_not_ready`, `upload_failed`, `send_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `result_binding_failed`, `candidate_validation_failed`, `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`, and `forbidden_visible_mark`.
 - The pipeline owns storage, validation, selection, durable state, and export. The provider owns only submission and task-bound candidate retrieval.
 - Prefer isolating each provider behind a small adapter with `submit`, `wait`, `download`, and `classify_failure` behavior.
 
