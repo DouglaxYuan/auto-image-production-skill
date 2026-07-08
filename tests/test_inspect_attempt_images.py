@@ -165,6 +165,23 @@ class InspectAttemptImagesTest(unittest.TestCase):
             result.stderr,
         )
 
+    def test_cli_rejects_ocr_text_that_conflicts_with_no_text_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["ocr_status"] = "no_text"
+            data["candidates"][0]["ocr_text"] = "SALE"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "candidate 1 OCR status no_text conflicts with non-empty OCR text",
+            result.stderr,
+        )
+
     def test_cli_rejects_failed_attempt_without_candidate_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

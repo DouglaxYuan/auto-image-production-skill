@@ -23,7 +23,8 @@ if str(ROOT) not in sys.path:
 from scripts.validate_attempt import validate_manifest  # noqa: E402
 
 
-PASSING_OCR_STATUSES = frozenset(("passed", "no_text", "text_absent", "clear"))
+NO_TEXT_OCR_STATUSES = frozenset(("no_text", "text_absent", "clear"))
+PASSING_OCR_STATUSES = frozenset(("passed", *NO_TEXT_OCR_STATUSES))
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -95,6 +96,10 @@ def _validate_candidate_ocr(
 
     ocr_text = candidate.get("ocr_text")
     if isinstance(ocr_text, str):
+        if isinstance(ocr_status, str) and ocr_status in NO_TEXT_OCR_STATUSES and ocr_text.strip():
+            errors.append(
+                f"candidate {index} OCR status {ocr_status} conflicts with non-empty OCR text"
+            )
         if rules.get("reject_any_ocr_text") and ocr_text.strip():
             errors.append(
                 f"candidate {index} contains OCR text while reject_any_ocr_text is enabled"
