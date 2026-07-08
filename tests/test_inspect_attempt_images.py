@@ -654,6 +654,32 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual("generation_timeout", report["suggested_error_code"])
         self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
 
+    def test_cli_json_scales_retry_delay_in_recovery_hint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = {
+                "item_id": "ASSET-0001",
+                "attempt_id": "A-0001-001",
+                "task_id": "ASSET-0001-A001",
+                "provider": "doubao browser",
+                "status": "failed",
+                "error_code": "browser_control_unavailable",
+                "error_detail": "Local browser automation could not read the provider window.",
+                "candidate_count": 0,
+                "retry_count": 1,
+                "result_binding": "TASK-ID ASSET-0001-A001 failed before candidates",
+                "candidates": [],
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertEqual("browser_control_unavailable", report["suggested_error_code"])
+        self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
+
     def test_cli_json_preserves_captcha_failure_for_zero_candidate_attempt(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

@@ -29,6 +29,7 @@ from scripts.plan_attempt_recovery import (  # noqa: E402
     _normalized_error_code,
     _operator_block_key,
     _requires_operator,
+    _retry_after_seconds,
 )
 
 
@@ -195,7 +196,8 @@ def _recovery_hint(errors: list[str], data: dict[str, Any] | None = None) -> dic
         "requires_operator": _requires_operator(action),
         "next_command": _next_command_for_action(action),
     }
-    retry_after_seconds = policy.get("retry_after_seconds")
+    retry_context = data if isinstance(data, dict) else {}
+    retry_after_seconds = _retry_after_seconds(policy, retry_context)
     if retry_after_seconds is not None:
         hint["retry_after_seconds"] = retry_after_seconds
     plan_context = {
