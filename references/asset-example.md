@@ -35,6 +35,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `rate_limited`
 - `network_error`
 - `page_load_failed`
+- `browser_crashed`
 - `moderation_blocked`
 - `quota_exhausted`
 - `upload_not_ready`

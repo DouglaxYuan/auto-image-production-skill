@@ -76,6 +76,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 60,
         "reason": "provider page load or navigation failed",
     },
+    "browser_crashed": {
+        "action": "retry",
+        "failure_category": "provider_runtime",
+        "retryable": True,
+        "retry_after_seconds": 60,
+        "reason": "browser process or page crashed",
+    },
     "generation_timeout": {
         "action": "retry",
         "failure_category": "provider_runtime",
