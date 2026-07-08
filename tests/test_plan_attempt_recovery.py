@@ -235,6 +235,20 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual(False, plan["requires_operator"])
         self.assertEqual("route to approved alternate provider or skip", plan["next_command"])
 
+    def test_cli_classifies_missing_ocr_evidence_as_quality_gate_reroute(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "missing_ocr_evidence"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("reroute_or_skip", plan["action"])
+        self.assertEqual(False, plan["retryable"])
+        self.assertEqual("quality_gate", plan["failure_category"])
+        self.assertEqual(False, plan["requires_operator"])
+        self.assertEqual("route to approved alternate provider or skip", plan["next_command"])
+
     def test_cli_normalizes_error_code_separators_for_policy_lookup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

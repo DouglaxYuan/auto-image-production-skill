@@ -174,6 +174,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": None,
         "reason": "candidate contains forbidden OCR text",
     },
+    "missing_ocr_evidence": {
+        "action": "reroute_or_skip",
+        "failure_category": "quality_gate",
+        "retryable": False,
+        "retry_after_seconds": None,
+        "reason": "candidate is missing required OCR evidence",
+    },
     "forbidden_visible_mark": {
         "action": "reroute_provider",
         "failure_category": "quality_gate",

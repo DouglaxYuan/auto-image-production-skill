@@ -95,7 +95,7 @@ If a provider interrupts the run before returning candidates, keep the attempt i
 staging with `status: "failed"`, `error_code`, `error_detail`,
 `candidate_count: 0`, and `candidates: []`. Examples include `captcha_required`,
 `login_required`, `concurrency_limited`, `rate_limited`, `provider_busy`, `network_error`,
-`page_load_failed`, `browser_crashed`, `selector_not_found`, `moderation_blocked`, `upload_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, and `forbidden_ocr_text`. This lets automation resume, back off, switch providers,
+`page_load_failed`, `browser_crashed`, `selector_not_found`, `moderation_blocked`, `upload_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `forbidden_ocr_text`, and `missing_ocr_evidence`. This lets automation resume, back off, switch providers,
 or request human intervention without losing the task record.
 
 Validate attempt bookkeeping while the attempt is still staged:
@@ -113,8 +113,8 @@ python scripts/plan_attempt_recovery.py --max-retries 3 ITEM/.attempts/ATTEMPT_I
 The recovery planner returns JSON actions such as `needs_human`, `retry`,
 `backoff`, `quarantine`, `reroute_provider`, or `inspect_images`. Use it to keep
 CAPTCHA, login-required sessions, browser crashes, missing UI selectors, page load, network, upload, or download errors, provider-busy responses, rate limits, and concurrency limits from all
-collapsing into the same interrupted state. It also routes OCR/text-residue
-quality failures to approved reroute or skip actions rather than post-processing
+collapsing into the same interrupted state. It also routes missing OCR evidence
+and OCR/text-residue quality failures to approved reroute or skip actions rather than post-processing
 the downloaded image. It normalizes error-code whitespace
 or hyphen separators for policy lookup while preserving the original
 `error_code` in the returned plan; failed plans also include

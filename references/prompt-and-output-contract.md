@@ -88,8 +88,8 @@ Then run `plan_attempt_recovery.py` to classify the next action. It should route
 interactive verification and login-required sessions to `needs_human`, transient
 browser crashes, page load, network, upload, download, no-candidate, and timeout failures to `retry`,
 provider-busy responses, model rate limits, and concurrency pressure to
-`backoff`, missing UI selectors to `review_failure`, and quality/provider mark
-or OCR text failures to reroute or quarantine actions.
+`backoff`, missing UI selectors to `review_failure`, and missing OCR evidence,
+quality/provider mark, or OCR text failures to reroute or quarantine actions.
 The planner normalizes error-code whitespace or hyphen separators for policy
 lookup while preserving the original `error_code` in the returned plan; failed
 plans also include `normalized_error_code` for scheduler diagnostics.
