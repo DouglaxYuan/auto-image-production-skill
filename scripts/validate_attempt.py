@@ -24,6 +24,7 @@ REQUIRED_FIELDS = (
 )
 FAILED_STATUS = "failed"
 ABSOLUTE_PATH_PATTERN = re.compile(r"(?<![\w<])/(?:[^\s;:(),]+/?)+")
+REPORT_IDENTITY_FIELDS = ("item_id", "attempt_id", "task_id", "provider")
 
 UNICODE_PATH_SEPARATOR_LOOKALIKES = frozenset(
     (
@@ -118,10 +119,22 @@ def _redact_local_paths(value: str) -> str:
     return ABSOLUTE_PATH_PATTERN.sub("<path>", value)
 
 
-def _validation_report(errors: list[str], *, require_selected: bool) -> dict[str, Any]:
+def _safe_report_identity_value(value: Any) -> str | None:
+    if (
+        isinstance(value, str)
+        and value == value.strip()
+        and not _string_has_unsafe_display_character(value)
+    ):
+        return value
+    return None
+
+
+def _validation_report(
+    errors: list[str], *, require_selected: bool, data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     report_errors = [_redact_local_paths(error) for error in errors]
     valid = not errors
-    return {
+    report = {
         "valid": valid,
         "status": "passed" if valid else "failed",
         "error_code": None if valid else "attempt_manifest_invalid",
@@ -133,6 +146,10 @@ def _validation_report(errors: list[str], *, require_selected: bool) -> dict[str
         "require_selected": require_selected,
         "errors": report_errors,
     }
+    data = data or {}
+    for field in REPORT_IDENTITY_FIELDS:
+        report[field] = _safe_report_identity_value(data.get(field))
+    return report
 
 
 def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -645,9 +662,11 @@ def main(argv: list[str] | None = None) -> int:
 
     errors = validate_manifest(args.manifest, require_selected=args.require_selected)
     if args.json:
+        data_errors: list[str] = []
+        data = _load_manifest(Path(args.manifest), data_errors)
         print(
             json.dumps(
-                _validation_report(errors, require_selected=args.require_selected),
+                _validation_report(errors, require_selected=args.require_selected, data=data),
                 ensure_ascii=False,
                 sort_keys=True,
             )

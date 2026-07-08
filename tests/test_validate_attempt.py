@@ -79,6 +79,26 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual("attempt manifest valid", result.stdout.strip())
         self.assertEqual("", result.stderr.strip())
 
+    def test_cli_json_includes_attempt_identity_for_scheduler_logs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), "--json", str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("ASSET-0001", report["item_id"])
+        self.assertEqual("A-0001-001", report["attempt_id"])
+        self.assertEqual("ASSET-0001-A001", report["task_id"])
+        self.assertEqual("browser image tool", report["provider"])
+
     def test_cli_exits_nonzero_for_invalid_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
