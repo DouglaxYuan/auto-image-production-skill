@@ -126,6 +126,13 @@ def _retry_budget_exhausted(data: dict[str, Any], max_retries: int) -> bool:
     return isinstance(retry_count, int) and not isinstance(retry_count, bool) and retry_count >= max_retries
 
 
+def _remaining_retries(data: dict[str, Any], max_retries: int) -> int:
+    retry_count = data.get("retry_count", 0)
+    if not isinstance(retry_count, int) or isinstance(retry_count, bool):
+        return 0
+    return max(max_retries - retry_count, 0)
+
+
 def plan_attempt_recovery(
     manifest_path: str | Path, *, max_retries: int = 3
 ) -> tuple[dict[str, Any] | None, list[str]]:
@@ -152,6 +159,8 @@ def plan_attempt_recovery(
         else:
             plan.update(policy)
             plan["next_command"] = "record human intervention or schedule retry"
+            if policy.get("retryable"):
+                plan["remaining_retries"] = _remaining_retries(data, max_retries)
             if policy.get("retryable") and _retry_budget_exhausted(data, max_retries):
                 plan.update(
                     {

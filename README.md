@@ -116,7 +116,8 @@ CAPTCHA, logged-out sessions, network errors, and concurrency limits from all
 collapsing into the same interrupted state. For retryable failures, record a
 non-negative integer `retry_count`; when it reaches `--max-retries`, the planner
 escalates to `review_failure` instead of looping forever. `--max-retries` must
-be a positive integer.
+be a positive integer. Retryable plans include `remaining_retries` so schedulers
+can decide whether to retry, back off, or escalate.
 
 Before publishing a successful attempt, also require the manifest to name the selected candidate:
 

@@ -139,6 +139,22 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
 
         self.assertEqual("retry", plan["action"])
         self.assertEqual(True, plan["retryable"])
+        self.assertEqual(1, plan["remaining_retries"])
+
+    def test_cli_reports_zero_remaining_retries_after_budget_is_exhausted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.failed_manifest(root, "network_error")
+            data["retry_count"] = 3
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--max-retries", "3", manifest_path)
+            self.assertEqual("", result.stderr.strip())
+            self.assertEqual(0, result.returncode)
+            plan = json.loads(result.stdout)
+
+        self.assertEqual(0, plan["remaining_retries"])
 
     def test_cli_rejects_non_positive_max_retries(self):
         with tempfile.TemporaryDirectory() as tmp:
