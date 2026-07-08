@@ -113,7 +113,8 @@ Use `validate_attempt.py` for both successful and failed attempts. Use
 human-intervention, quarantine, or reroute actions. Use
 `inspect_attempt_images.py` only after candidate files have been downloaded; a
 failed zero-candidate attempt should stay recorded but should not pass image
-inspection.
+inspection. For retryable failures, respect the returned `retry_after_seconds`;
+it increases with `retry_count` and is capped at one hour.
 
 ## Hard Stops
 

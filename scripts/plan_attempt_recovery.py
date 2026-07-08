@@ -16,6 +16,9 @@ if str(ROOT) not in sys.path:
 from scripts.validate_attempt import validate_manifest  # noqa: E402
 
 
+MAX_RETRY_AFTER_SECONDS = 3600
+
+
 POLICIES: dict[str, dict[str, Any]] = {
     "captcha_required": {
         "action": "needs_human",
@@ -133,6 +136,16 @@ def _remaining_retries(data: dict[str, Any], max_retries: int) -> int:
     return max(max_retries - retry_count, 0)
 
 
+def _retry_after_seconds(policy: dict[str, Any], data: dict[str, Any]) -> Any:
+    retry_after = policy.get("retry_after_seconds")
+    retry_count = data.get("retry_count", 0)
+    if not isinstance(retry_after, int) or isinstance(retry_after, bool):
+        return retry_after
+    if not isinstance(retry_count, int) or isinstance(retry_count, bool):
+        return retry_after
+    return min(retry_after * (2**retry_count), MAX_RETRY_AFTER_SECONDS)
+
+
 def _next_command_for_action(action: Any) -> str:
     if action == "needs_human":
         return "request human intervention"
@@ -174,6 +187,7 @@ def plan_attempt_recovery(
             if policy.get("retryable"):
                 plan["max_retries"] = max_retries
                 plan["remaining_retries"] = _remaining_retries(data, max_retries)
+                plan["retry_after_seconds"] = _retry_after_seconds(policy, data)
             if policy.get("retryable") and _retry_budget_exhausted(data, max_retries):
                 plan.update(
                     {
