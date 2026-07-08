@@ -113,7 +113,9 @@ python scripts/plan_attempt_recovery.py --max-retries 3 ITEM/.attempts/ATTEMPT_I
 The recovery planner returns JSON actions such as `needs_human`, `retry`,
 `backoff`, `quarantine`, `reroute_provider`, or `inspect_images`. Use it to keep
 CAPTCHA, logged-out sessions, network errors, and concurrency limits from all
-collapsing into the same interrupted state. For retryable failures, record a
+collapsing into the same interrupted state. It normalizes error-code whitespace
+or hyphen separators for policy lookup while preserving the original
+`error_code` in the returned plan. For retryable failures, record a
 non-negative integer `retry_count`; when it reaches `--max-retries`, the planner
 escalates to `review_failure` instead of looping forever. `--max-retries` must
 be a positive integer. Retryable plans include `remaining_retries` so schedulers

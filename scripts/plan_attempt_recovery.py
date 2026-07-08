@@ -155,6 +155,12 @@ def _next_retry_count(data: dict[str, Any]) -> int:
     return retry_count + 1
 
 
+def _normalized_error_code(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    return "_".join(value.replace("-", " ").split()).casefold()
+
+
 def _retry_after_seconds(policy: dict[str, Any], data: dict[str, Any]) -> Any:
     retry_after = policy.get("retry_after_seconds")
     retry_count = data.get("retry_count", 0)
@@ -193,7 +199,7 @@ def plan_attempt_recovery(
     plan = _base_plan(data)
     if data.get("status") == "failed":
         error_code = data.get("error_code")
-        policy = POLICIES.get(error_code)
+        policy = POLICIES.get(_normalized_error_code(error_code))
         if policy is None:
             plan.update(
                 {
