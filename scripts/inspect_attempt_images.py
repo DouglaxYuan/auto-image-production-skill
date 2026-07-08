@@ -81,7 +81,7 @@ def _normalized_mark(value: str) -> str:
 
 
 def _normalized_status(value: str) -> str:
-    return value.strip().casefold()
+    return "_".join(value.replace("-", " ").split()).casefold()
 
 
 def _normalized_ocr_text(value: str) -> str:
