@@ -93,6 +93,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 60,
         "reason": "browser process or page crashed",
     },
+    "browser_control_unavailable": {
+        "action": "retry",
+        "failure_category": "provider_runtime",
+        "retryable": True,
+        "retry_after_seconds": 60,
+        "reason": "local browser automation could not read or control the provider window",
+    },
     "selector_not_found": {
         "action": "review_failure",
         "failure_category": "automation_contract",

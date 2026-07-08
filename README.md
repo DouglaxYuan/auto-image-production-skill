@@ -95,7 +95,8 @@ If a provider interrupts the run before returning candidates, keep the attempt i
 staging with `status: "failed"`, `error_code`, `error_detail`,
 `candidate_count: 0`, and `candidates: []`. Examples include `captcha_required`,
 `login_required`, `concurrency_limited`, `rate_limited`, `provider_busy`, `network_error`,
-`page_load_failed`, `browser_crashed`, `selector_not_found`, `attempt_manifest_invalid`, `moderation_blocked`, `upload_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`, and `ocr_status_failed`. This lets automation resume, back off, switch providers,
+`page_load_failed`, `browser_crashed`, `browser_control_unavailable`,
+`selector_not_found`, `attempt_manifest_invalid`, `moderation_blocked`, `upload_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`, and `ocr_status_failed`. This lets automation resume, back off, switch providers,
 or request human intervention without losing the task record.
 
 Validate attempt bookkeeping while the attempt is still staged:

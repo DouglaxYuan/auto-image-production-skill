@@ -168,6 +168,21 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("provider_runtime", plan["failure_category"])
         self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
 
+    def test_cli_classifies_browser_control_unavailable_as_retry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(
+                root, self.failed_manifest(root, "browser_control_unavailable")
+            )
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("retry", plan["action"])
+        self.assertEqual(True, plan["retryable"])
+        self.assertEqual("provider_runtime", plan["failure_category"])
+        self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
+
     def test_cli_classifies_missing_selector_as_automation_contract_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
