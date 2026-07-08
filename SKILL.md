@@ -54,6 +54,7 @@ Treat each requested output as one stable item. The reusable contract is:
    - Write new candidates only to `ITEM/.attempts/ATTEMPT_ID/`.
    - Advance durable state through `prepared -> submitting -> submitted -> generated -> downloaded -> validated -> selected -> committed`.
    - Record failures with `status: "failed"`, `error_code`, and `error_detail`; do not silently retry. Failed attempts may use `candidate_count: 0` and `candidates: []` when the provider returns no images.
+   - Run recovery planning before resubmitting a failed attempt; human-only failures such as CAPTCHA or logged-out sessions must not spin in a retry loop.
    - Publish only after the expected candidates are downloaded, decoded, dimension-checked, hash-checked, OCR-checked, selected, and recorded in durable state.
    - Publish to `ITEM/attempts/ATTEMPT_ID/` and atomically point `ITEM/current` at the successful attempt.
 
@@ -87,7 +88,7 @@ When moving from one image provider to another, keep the local contract unchange
 
 - The provider must accept source asset attachment(s), generation rules, prompt text, and a TASK-ID.
 - The provider adapter must return exactly the candidate images for the active task, not a page-wide scrape.
-- The adapter must expose clear failure types: captcha-required, quota, concurrency-limited, network-error, moderation, upload-not-ready, send-failed, generation-timeout, and result-binding-failed.
+- The adapter must expose clear failure types such as `captcha_required`, `browser_session_not_authenticated`, `quota_exhausted`, `concurrency_limited`, `network_error`, `moderation_blocked`, `upload_not_ready`, `send_failed`, `generation_timeout`, and `result_binding_failed`.
 - The pipeline owns storage, validation, selection, durable state, and export. The provider owns only submission and task-bound candidate retrieval.
 - Prefer isolating each provider behind a small adapter with `submit`, `wait`, `download`, and `classify_failure` behavior.
 
@@ -98,6 +99,7 @@ Adapt these checks to the current project:
 ```bash
 git status --short
 python scripts/validate_attempt.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
+python scripts/plan_attempt_recovery.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/validate_attempt.py --require-selected path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/inspect_attempt_images.py --require-size 2048x2048 path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python -m unittest discover -s tests -q
@@ -107,6 +109,8 @@ sqlite3 path/to/image_pipeline.sqlite 'PRAGMA foreign_key_check;'
 ```
 
 Use `validate_attempt.py` for both successful and failed attempts. Use
+`plan_attempt_recovery.py` to classify failed attempts into retry, backoff,
+human-intervention, quarantine, or reroute actions. Use
 `inspect_attempt_images.py` only after candidate files have been downloaded; a
 failed zero-candidate attempt should stay recorded but should not pass image
 inspection.

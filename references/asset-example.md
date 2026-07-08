@@ -28,8 +28,12 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 
 ## Example Provider Failure Types
 
-- `quota_exhausted`
+- `captcha_required`
+- `browser_session_not_authenticated`
+- `concurrency_limited`
+- `network_error`
 - `moderation_blocked`
+- `quota_exhausted`
 - `upload_not_ready`
 - `send_failed`
 - `generation_timeout`

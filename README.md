@@ -104,6 +104,17 @@ Validate attempt bookkeeping while the attempt is still staged:
 python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
 
+Plan the next automation action before resubmitting a failed attempt:
+
+```bash
+python scripts/plan_attempt_recovery.py ITEM/.attempts/ATTEMPT_ID/attempt.json
+```
+
+The recovery planner returns JSON actions such as `needs_human`, `retry`,
+`backoff`, `quarantine`, `reroute_provider`, or `inspect_images`. Use it to keep
+CAPTCHA, logged-out sessions, network errors, and concurrency limits from all
+collapsing into the same interrupted state.
+
 Before publishing a successful attempt, also require the manifest to name the selected candidate:
 
 ```bash
@@ -140,4 +151,5 @@ but fail image inspection.
 - `references/asset-example.md`: neutral example
 - `scripts/validate_attempt.py`: local attempt manifest validator
 - `scripts/inspect_attempt_images.py`: downloaded candidate image quality gate
+- `scripts/plan_attempt_recovery.py`: failed-attempt retry/backoff/human-action planner
 - `agents/openai.yaml`: UI metadata for Codex
