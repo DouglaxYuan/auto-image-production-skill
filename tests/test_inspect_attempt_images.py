@@ -456,3 +456,38 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         report = json.loads(result.stdout)
         self.assertIsNone(report.get("failed_attempt_patch"))
+
+    def test_cli_json_includes_recovery_hint_for_suggested_failure_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["visible_marks"] = ["doubao_ai_generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertEqual(
+            {
+                "action": "reroute_provider",
+                "failure_category": "quality_gate",
+                "retryable": False,
+                "requires_operator": False,
+                "next_command": "route to approved alternate provider or skip",
+            },
+            report.get("recovery_hint"),
+        )
+
+    def test_cli_json_omits_recovery_hint_when_images_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(0, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertIsNone(report.get("recovery_hint"))

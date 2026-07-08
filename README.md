@@ -161,13 +161,16 @@ Visible-mark checks collapse whitespace and match case-insensitively.
 Blank forbidden text or visible-mark entries are ignored after normalization.
 With `--json`, the inspector writes `item_id`, `attempt_id`, `task_id`,
 `provider`, `status`, `errors`, `suggested_error_code`, and
-`failed_attempt_patch` to stdout so schedulers can persist failures such as
+`failed_attempt_patch` to stdout, plus `recovery_hint` when the suggested error
+code already maps to a recovery policy. Schedulers can persist failures such as
 `forbidden_visible_mark`,
 `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`,
 `ocr_status_failed`, `no_candidates_found`, or `candidate_validation_failed`
 before invoking the recovery planner. The inspector does not mutate the
 manifest; runners may apply `failed_attempt_patch.status`, `error_code`, and
-`error_detail` when they intentionally mark the attempt failed.
+`error_detail` when they intentionally mark the attempt failed. Treat
+`recovery_hint` as a scheduling shortcut; run `plan_attempt_recovery.py` after
+the manifest is marked failed for the authoritative plan.
 It is only for attempts with downloaded candidate files; failed zero-candidate
 attempts should pass manifest validation but fail image inspection.
 

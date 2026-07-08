@@ -21,6 +21,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.validate_attempt import validate_manifest  # noqa: E402
+from scripts.plan_attempt_recovery import (  # noqa: E402
+    POLICIES,
+    _next_command_for_action,
+    _requires_operator,
+)
 
 
 NO_TEXT_OCR_STATUSES = frozenset(("no_text", "text_absent", "clear"))
@@ -122,6 +127,23 @@ def _failed_attempt_patch(errors: list[str]) -> dict[str, str] | None:
     }
 
 
+def _recovery_hint(errors: list[str]) -> dict[str, Any] | None:
+    error_code = _suggested_error_code(errors)
+    if error_code is None:
+        return None
+    policy = POLICIES.get(error_code)
+    if policy is None:
+        return None
+    action = policy.get("action")
+    return {
+        "action": action,
+        "failure_category": policy.get("failure_category"),
+        "retryable": policy.get("retryable"),
+        "requires_operator": _requires_operator(action),
+        "next_command": _next_command_for_action(action),
+    }
+
+
 def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, Any]:
     data = data or {}
     return {
@@ -132,6 +154,7 @@ def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) ->
         "status": "failed" if errors else "passed",
         "suggested_error_code": _suggested_error_code(errors),
         "failed_attempt_patch": _failed_attempt_patch(errors),
+        "recovery_hint": _recovery_hint(errors),
         "errors": errors,
     }
 
