@@ -120,10 +120,14 @@ def _redact_local_paths(value: str) -> str:
 
 def _validation_report(errors: list[str], *, require_selected: bool) -> dict[str, Any]:
     report_errors = [_redact_local_paths(error) for error in errors]
+    valid = not errors
     return {
-        "valid": not errors,
-        "status": "failed" if errors else "passed",
-        "error_code": "attempt_manifest_invalid" if errors else None,
+        "valid": valid,
+        "status": "passed" if valid else "failed",
+        "error_code": None if valid else "attempt_manifest_invalid",
+        "failure_category": None if valid else "automation_contract",
+        "requires_operator": False if valid else True,
+        "next_command": None if valid else "inspect the failed attempt manifest",
         "error_count": len(errors),
         "require_selected": require_selected,
         "errors": report_errors,
