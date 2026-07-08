@@ -66,6 +66,19 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertIn("requires_operator", plan)
         self.assertEqual(True, plan["requires_operator"])
 
+    def test_cli_includes_operator_block_key_for_captcha(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "captcha_required"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual(
+            "ASSET-0001|browser image tool|captcha_required",
+            plan["operator_block_key"],
+        )
+
     def test_cli_classifies_login_required_as_human_intervention(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

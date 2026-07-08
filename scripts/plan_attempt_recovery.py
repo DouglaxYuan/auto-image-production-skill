@@ -238,6 +238,7 @@ def _base_plan(data: dict[str, Any]) -> dict[str, Any]:
         "item_id": _safe_report_text_value(data.get("item_id")),
         "attempt_id": _safe_report_text_value(data.get("attempt_id")),
         "task_id": _safe_report_text_value(data.get("task_id")),
+        "provider": _safe_report_text_value(data.get("provider")),
         "status": _safe_report_text_value(data.get("status", "candidate_available")),
         "error_code": _safe_report_text_value(data.get("error_code")),
         "retry_count": data.get("retry_count", 0),
@@ -340,6 +341,16 @@ def _requires_operator(action: Any) -> bool:
     return action in {"needs_human", "quarantine", "review_failure"}
 
 
+def _operator_block_key(plan: dict[str, Any]) -> str | None:
+    if not plan.get("requires_operator"):
+        return None
+    error_code = plan.get("normalized_error_code") or plan.get("error_code")
+    parts = (plan.get("item_id"), plan.get("provider"), error_code)
+    if not all(isinstance(part, str) and part.strip() for part in parts):
+        return None
+    return "|".join(str(_safe_report_text_value(part)) for part in parts)
+
+
 def plan_attempt_recovery(
     manifest_path: str | Path, *, max_retries: int = 3
 ) -> tuple[dict[str, Any] | None, list[str]]:
@@ -389,6 +400,9 @@ def plan_attempt_recovery(
                         "next_command": "review failed attempt before retrying",
                     }
                 )
+        operator_block_key = _operator_block_key(plan)
+        if operator_block_key is not None:
+            plan["operator_block_key"] = operator_block_key
         return plan, []
 
     plan.update(
