@@ -94,8 +94,8 @@ Only after candidates pass validation and a final image is selected should the a
 If a provider interrupts the run before returning candidates, keep the attempt in
 staging with `status: "failed"`, `error_code`, `error_detail`,
 `candidate_count: 0`, and `candidates: []`. Examples include `captcha_required`,
-`concurrency_limited`, `rate_limited`, `network_error`, `moderation_blocked`, and
-`generation_timeout`. This lets automation resume, back off, switch providers,
+`concurrency_limited`, `rate_limited`, `network_error`, `moderation_blocked`,
+`download_failed`, and `generation_timeout`. This lets automation resume, back off, switch providers,
 or request human intervention without losing the task record.
 
 Validate attempt bookkeeping while the attempt is still staged:
@@ -112,7 +112,7 @@ python scripts/plan_attempt_recovery.py --max-retries 3 ITEM/.attempts/ATTEMPT_I
 
 The recovery planner returns JSON actions such as `needs_human`, `retry`,
 `backoff`, `quarantine`, `reroute_provider`, or `inspect_images`. Use it to keep
-CAPTCHA, logged-out sessions, network errors, rate limits, and concurrency limits from all
+CAPTCHA, logged-out sessions, network or download errors, rate limits, and concurrency limits from all
 collapsing into the same interrupted state. It normalizes error-code whitespace
 or hyphen separators for policy lookup while preserving the original
 `error_code` in the returned plan; failed plans also include

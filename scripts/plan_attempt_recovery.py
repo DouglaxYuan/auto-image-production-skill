@@ -83,6 +83,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 60,
         "reason": "prompt submission failed",
     },
+    "download_failed": {
+        "action": "retry",
+        "failure_category": "network",
+        "retryable": True,
+        "retry_after_seconds": 60,
+        "reason": "candidate download failed",
+    },
     "result_binding_failed": {
         "action": "retry_with_new_task",
         "failure_category": "result_integrity",

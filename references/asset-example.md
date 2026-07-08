@@ -37,6 +37,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `quota_exhausted`
 - `upload_not_ready`
 - `send_failed`
+- `download_failed`
 - `generation_timeout`
 - `result_binding_failed`
 - `candidate_validation_failed`

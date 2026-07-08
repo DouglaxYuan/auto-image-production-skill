@@ -103,6 +103,19 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertGreaterEqual(plan["retry_after_seconds"], 30)
         self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
 
+    def test_cli_classifies_download_failure_as_retry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "download_failed"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("retry", plan["action"])
+        self.assertEqual(True, plan["retryable"])
+        self.assertEqual("network", plan["failure_category"])
+        self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
+
     def test_cli_normalizes_error_code_separators_for_policy_lookup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
