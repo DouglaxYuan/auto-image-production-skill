@@ -125,6 +125,7 @@ def _validation_report(errors: list[str], *, require_selected: bool) -> dict[str
         "valid": valid,
         "status": "passed" if valid else "failed",
         "error_code": None if valid else "attempt_manifest_invalid",
+        "normalized_error_code": None if valid else "attempt_manifest_invalid",
         "failure_category": None if valid else "automation_contract",
         "requires_operator": False if valid else True,
         "next_command": None if valid else "inspect the failed attempt manifest",

@@ -115,6 +115,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual(False, report["valid"])
         self.assertEqual("failed", report["status"])
         self.assertEqual("attempt_manifest_invalid", report["error_code"])
+        self.assertEqual("attempt_manifest_invalid", report["normalized_error_code"])
         self.assertEqual("automation_contract", report["failure_category"])
         self.assertEqual(True, report["requires_operator"])
         self.assertEqual("inspect the failed attempt manifest", report["next_command"])
