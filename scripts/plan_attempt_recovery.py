@@ -107,10 +107,18 @@ def _base_plan(data: dict[str, Any]) -> dict[str, Any]:
         "task_id": data.get("task_id"),
         "status": data.get("status", "candidate_available"),
         "error_code": data.get("error_code"),
+        "retry_count": data.get("retry_count", 0),
     }
 
 
-def plan_attempt_recovery(manifest_path: str | Path) -> tuple[dict[str, Any] | None, list[str]]:
+def _retry_budget_exhausted(data: dict[str, Any], max_retries: int) -> bool:
+    retry_count = data.get("retry_count", 0)
+    return isinstance(retry_count, int) and not isinstance(retry_count, bool) and retry_count >= max_retries
+
+
+def plan_attempt_recovery(
+    manifest_path: str | Path, *, max_retries: int = 3
+) -> tuple[dict[str, Any] | None, list[str]]:
     path = Path(manifest_path)
     errors = validate_manifest(path)
     if errors:
@@ -134,6 +142,16 @@ def plan_attempt_recovery(manifest_path: str | Path) -> tuple[dict[str, Any] | N
         else:
             plan.update(policy)
             plan["next_command"] = "record human intervention or schedule retry"
+            if policy.get("retryable") and _retry_budget_exhausted(data, max_retries):
+                plan.update(
+                    {
+                        "action": "review_failure",
+                        "retryable": False,
+                        "retry_after_seconds": None,
+                        "reason": "retry budget exhausted",
+                        "next_command": "review failed attempt before retrying",
+                    }
+                )
         return plan, []
 
     plan.update(
@@ -152,11 +170,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Plan recovery or next validation action for an attempt manifest."
     )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=3,
+        help="Maximum retry_count allowed before escalating retryable failures.",
+    )
     parser.add_argument("manifest", help="Path to attempt manifest JSON")
     args = parser.parse_args(argv)
 
     try:
-        plan, errors = plan_attempt_recovery(args.manifest)
+        plan, errors = plan_attempt_recovery(args.manifest, max_retries=args.max_retries)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         errors = [f"manifest could not be loaded for recovery planning: {exc}"]
         plan = None

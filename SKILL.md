@@ -54,7 +54,7 @@ Treat each requested output as one stable item. The reusable contract is:
    - Write new candidates only to `ITEM/.attempts/ATTEMPT_ID/`.
    - Advance durable state through `prepared -> submitting -> submitted -> generated -> downloaded -> validated -> selected -> committed`.
    - Record failures with `status: "failed"`, `error_code`, and `error_detail`; do not silently retry. Failed attempts may use `candidate_count: 0` and `candidates: []` when the provider returns no images.
-   - Run recovery planning before resubmitting a failed attempt; human-only failures such as CAPTCHA or logged-out sessions must not spin in a retry loop.
+   - Run recovery planning before resubmitting a failed attempt; human-only failures such as CAPTCHA or logged-out sessions must not spin in a retry loop, and retryable failures must respect `retry_count` and the configured max retries.
    - Publish only after the expected candidates are downloaded, decoded, dimension-checked, hash-checked, OCR-checked, selected, and recorded in durable state.
    - Publish to `ITEM/attempts/ATTEMPT_ID/` and atomically point `ITEM/current` at the successful attempt.
 
@@ -99,7 +99,7 @@ Adapt these checks to the current project:
 ```bash
 git status --short
 python scripts/validate_attempt.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
-python scripts/plan_attempt_recovery.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
+python scripts/plan_attempt_recovery.py --max-retries 3 path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/validate_attempt.py --require-selected path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/inspect_attempt_images.py --require-size 2048x2048 path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python -m unittest discover -s tests -q

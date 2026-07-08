@@ -57,7 +57,7 @@ When an attempt writes a JSON manifest, validate the local bookkeeping before pu
 
 ```bash
 python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
-python scripts/plan_attempt_recovery.py ITEM/.attempts/ATTEMPT_ID/attempt.json
+python scripts/plan_attempt_recovery.py --max-retries 3 ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/validate_attempt.py --require-selected ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/inspect_attempt_images.py --require-size 2048x2048 ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
@@ -87,6 +87,8 @@ Then run `plan_attempt_recovery.py` to classify the next action. It should route
 interactive verification and logged-out sessions to `needs_human`, transient
 network and timeout failures to `retry`, model concurrency pressure to
 `backoff`, and quality/provider mark failures to reroute or quarantine actions.
+For retryable failures, increment a numeric `retry_count`; when it reaches
+`--max-retries`, the planner returns `review_failure` instead of another retry.
 
 ## Result Validation
 

@@ -106,3 +106,36 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("inspect_images", plan["action"])
         self.assertEqual(False, plan["retryable"])
         self.assertEqual("python scripts/inspect_attempt_images.py", plan["next_command"])
+
+    def test_cli_stops_retryable_failure_after_retry_budget_is_exhausted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.failed_manifest(root, "network_error")
+            data["retry_count"] = 3
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--max-retries", "3", manifest_path)
+            self.assertEqual("", result.stderr.strip())
+            self.assertEqual(0, result.returncode)
+            plan = json.loads(result.stdout)
+
+        self.assertEqual("review_failure", plan["action"])
+        self.assertEqual(False, plan["retryable"])
+        self.assertEqual("retry budget exhausted", plan["reason"])
+
+    def test_cli_keeps_retryable_failure_when_retry_budget_remains(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.failed_manifest(root, "network_error")
+            data["retry_count"] = 2
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--max-retries", "3", manifest_path)
+            self.assertEqual("", result.stderr.strip())
+            self.assertEqual(0, result.returncode)
+            plan = json.loads(result.stdout)
+
+        self.assertEqual("retry", plan["action"])
+        self.assertEqual(True, plan["retryable"])
