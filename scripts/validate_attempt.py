@@ -149,6 +149,7 @@ def _validation_report(
     data = data or {}
     for field in REPORT_IDENTITY_FIELDS:
         report[field] = _safe_report_identity_value(data.get(field))
+    report["selected_path"] = _safe_report_identity_value(data.get("selected_path"))
     return report
 
 

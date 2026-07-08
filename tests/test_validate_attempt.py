@@ -98,6 +98,7 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual("A-0001-001", report["attempt_id"])
         self.assertEqual("ASSET-0001-A001", report["task_id"])
         self.assertEqual("browser image tool", report["provider"])
+        self.assertEqual("candidate-b.png", report["selected_path"])
 
     def test_cli_exits_nonzero_for_invalid_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
