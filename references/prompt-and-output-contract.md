@@ -93,8 +93,9 @@ For retryable failures, increment a numeric `retry_count`; when it reaches
 `--max-retries` must be a positive integer. Retryable plans include
 `max_retries`, `remaining_retries`, `next_retry_count`, and a
 `retry_after_seconds` delay that grows with `retry_count` and caps at one hour.
-`next_command` is action-specific so a scheduler can tell human intervention
-apart from retry and reroute actions.
+`failure_category` groups failures for logging and alert routing. `next_command`
+is action-specific so a scheduler can tell human intervention apart from retry
+and reroute actions.
 
 ## Result Validation
 

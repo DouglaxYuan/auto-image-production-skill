@@ -121,8 +121,10 @@ can decide whether to retry, back off, or escalate, `max_retries` so logs show
 the configured budget, and `next_retry_count` so the next attempt records the
 incremented counter. `retry_after_seconds` grows with `retry_count` and is
 capped at one hour, so repeated network or queue failures do not retry in a
-tight loop. The `next_command` field is action-specific, for example `request
-human intervention` for CAPTCHA or logged out sessions.
+tight loop. `failure_category` groups failures for logging and alert routing,
+for example `network`, `capacity`, `human_intervention`, `quality_gate`, or
+`compliance`. The `next_command` field is action-specific, for example
+`request human intervention` for CAPTCHA or logged out sessions.
 
 Before publishing a successful attempt, also require the manifest to name the selected candidate:
 

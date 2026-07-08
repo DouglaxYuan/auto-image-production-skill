@@ -80,6 +80,28 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertGreaterEqual(plan["retry_after_seconds"], 30)
         self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
 
+    def test_cli_reports_failure_category_for_retryable_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "network_error"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertIn("failure_category", plan)
+        self.assertEqual("network", plan["failure_category"])
+
+    def test_cli_reports_failure_category_for_human_intervention(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "captcha_required"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertIn("failure_category", plan)
+        self.assertEqual("human_intervention", plan["failure_category"])
+
     def test_cli_routes_downloaded_attempt_to_image_inspection(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
