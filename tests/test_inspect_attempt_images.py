@@ -166,6 +166,19 @@ class InspectAttemptImagesTest(unittest.TestCase):
             result.stderr,
         )
 
+    def test_cli_ignores_blank_forbidden_visible_mark_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["forbidden_visible_marks"] = ["   "]
+            data["candidates"][0]["visible_marks"] = ["\n\t"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(0, result.returncode)
+
     def test_cli_rejects_missing_required_ocr_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

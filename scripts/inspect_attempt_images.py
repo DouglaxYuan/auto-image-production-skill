@@ -125,7 +125,8 @@ def _validate_candidate_marks(
 ) -> None:
     marks = {_normalized_mark(mark) for mark in _string_list(candidate.get("visible_marks"))}
     for forbidden in _string_list(rules.get("forbidden_visible_marks")):
-        if _normalized_mark(forbidden) in marks:
+        normalized_forbidden = _normalized_mark(forbidden)
+        if normalized_forbidden and normalized_forbidden in marks:
             errors.append(f"candidate {index} contains forbidden visible mark: {forbidden}")
 
 
