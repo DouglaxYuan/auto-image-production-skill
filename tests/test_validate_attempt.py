@@ -97,6 +97,28 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual("", result.stdout.strip())
         self.assertIn("candidate_count is 3 but candidates has 2 entries", result.stderr)
 
+    def test_cli_json_reports_invalid_manifest_without_absolute_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_manifest = Path(tmp) / "private" / "A-0001-001" / "attempt.json"
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), "--json", str(missing_manifest)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        report_text = json.dumps(report)
+        self.assertEqual(False, report["valid"])
+        self.assertEqual("failed", report["status"])
+        self.assertEqual("attempt_manifest_invalid", report["error_code"])
+        self.assertEqual(1, report["error_count"])
+        self.assertIn("<path>", report_text)
+        self.assertNotIn(str(missing_manifest), report_text)
+
     def test_failed_attempt_can_record_provider_interrupt_without_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.staged_attempt_root(tmp)

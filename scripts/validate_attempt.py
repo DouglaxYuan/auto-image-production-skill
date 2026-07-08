@@ -23,6 +23,7 @@ REQUIRED_FIELDS = (
     "candidates",
 )
 FAILED_STATUS = "failed"
+ABSOLUTE_PATH_PATTERN = re.compile(r"(?<![\w<])/(?:[^\s;:(),]+/?)+")
 
 UNICODE_PATH_SEPARATOR_LOOKALIKES = frozenset(
     (
@@ -111,6 +112,22 @@ def _binding_references_task(binding: Any, task_id: str) -> bool:
 
 def _reject_json_constant(value: str) -> None:
     raise ValueError(f"invalid JSON constant: {value}")
+
+
+def _redact_local_paths(value: str) -> str:
+    return ABSOLUTE_PATH_PATTERN.sub("<path>", value)
+
+
+def _validation_report(errors: list[str], *, require_selected: bool) -> dict[str, Any]:
+    report_errors = [_redact_local_paths(error) for error in errors]
+    return {
+        "valid": not errors,
+        "status": "failed" if errors else "passed",
+        "error_code": "attempt_manifest_invalid" if errors else None,
+        "error_count": len(errors),
+        "require_selected": require_selected,
+        "errors": report_errors,
+    }
 
 
 def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -613,10 +630,25 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Require selected_path for publish-time validation.",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Write a machine-readable validation report to stdout.",
+    )
     parser.add_argument("manifest", help="Path to attempt manifest JSON")
     args = parser.parse_args(argv)
 
     errors = validate_manifest(args.manifest, require_selected=args.require_selected)
+    if args.json:
+        print(
+            json.dumps(
+                _validation_report(errors, require_selected=args.require_selected),
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+        return 1 if errors else 0
+
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

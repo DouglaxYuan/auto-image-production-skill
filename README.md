@@ -104,6 +104,10 @@ Validate attempt bookkeeping while the attempt is still staged:
 python scripts/validate_attempt.py ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
 
+Use `--json` when an automation runner needs a machine-readable validation
+report with `valid`, `status`, `error_code`, `error_count`, `require_selected`,
+and `errors`; local absolute paths in that report are redacted as `<path>`.
+
 Plan the next automation action before resubmitting a failed attempt:
 
 ```bash
