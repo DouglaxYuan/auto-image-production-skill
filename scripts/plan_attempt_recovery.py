@@ -133,6 +133,18 @@ def _remaining_retries(data: dict[str, Any], max_retries: int) -> int:
     return max(max_retries - retry_count, 0)
 
 
+def _next_command_for_action(action: Any) -> str:
+    if action == "needs_human":
+        return "request human intervention"
+    if action in ("retry", "retry_with_new_task", "backoff"):
+        return "schedule retry after retry_after_seconds"
+    if action in ("reroute_provider", "reroute_or_skip"):
+        return "route to approved alternate provider or skip"
+    if action == "quarantine":
+        return "quarantine item and record operator decision"
+    return "inspect the failed attempt manifest"
+
+
 def plan_attempt_recovery(
     manifest_path: str | Path, *, max_retries: int = 3
 ) -> tuple[dict[str, Any] | None, list[str]]:
@@ -158,7 +170,7 @@ def plan_attempt_recovery(
             )
         else:
             plan.update(policy)
-            plan["next_command"] = "record human intervention or schedule retry"
+            plan["next_command"] = _next_command_for_action(plan.get("action"))
             if policy.get("retryable"):
                 plan["remaining_retries"] = _remaining_retries(data, max_retries)
             if policy.get("retryable") and _retry_budget_exhausted(data, max_retries):

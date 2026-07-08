@@ -53,6 +53,7 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("needs_human", plan["action"])
         self.assertEqual(False, plan["retryable"])
         self.assertEqual("captcha_required", plan["error_code"])
+        self.assertEqual("request human intervention", plan["next_command"])
 
     def test_cli_classifies_concurrency_limit_as_backoff(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -77,6 +78,7 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("retry", plan["action"])
         self.assertEqual(True, plan["retryable"])
         self.assertGreaterEqual(plan["retry_after_seconds"], 30)
+        self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
 
     def test_cli_routes_downloaded_attempt_to_image_inspection(self):
         with tempfile.TemporaryDirectory() as tmp:

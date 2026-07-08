@@ -117,7 +117,9 @@ collapsing into the same interrupted state. For retryable failures, record a
 non-negative integer `retry_count`; when it reaches `--max-retries`, the planner
 escalates to `review_failure` instead of looping forever. `--max-retries` must
 be a positive integer. Retryable plans include `remaining_retries` so schedulers
-can decide whether to retry, back off, or escalate.
+can decide whether to retry, back off, or escalate. The `next_command` field is
+action-specific, for example `request human intervention` for CAPTCHA or logged
+out sessions.
 
 Before publishing a successful attempt, also require the manifest to name the selected candidate:
 
