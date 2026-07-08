@@ -519,3 +519,17 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual("review_failure", report["recovery_hint"]["action"])
         self.assertEqual("automation_contract", report["recovery_hint"]["failure_category"])
         self.assertEqual(True, report["recovery_hint"]["requires_operator"])
+
+    def test_cli_json_redacts_absolute_paths_from_report_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_manifest = Path(tmp) / "private" / "A-0001-001" / "attempt.json"
+
+            result = self.run_script("--json", missing_manifest)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        report_text = json.dumps(report)
+        self.assertNotIn(str(missing_manifest), report_text)
+        self.assertIn("<path>", report_text)
+        self.assertEqual("attempt_manifest_invalid", report["suggested_error_code"])
+        self.assertIn("<path>", report["failed_attempt_patch"]["error_detail"])

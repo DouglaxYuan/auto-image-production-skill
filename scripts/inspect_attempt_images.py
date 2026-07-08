@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,7 @@ from scripts.plan_attempt_recovery import (  # noqa: E402
 
 NO_TEXT_OCR_STATUSES = frozenset(("no_text", "text_absent", "clear"))
 PASSING_OCR_STATUSES = frozenset(("passed", *NO_TEXT_OCR_STATUSES))
+ABSOLUTE_PATH_PATTERN = re.compile(r"(?<![\w<])/(?:[^\s;:(),]+/?)+")
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -135,6 +137,14 @@ def _failed_attempt_patch(errors: list[str]) -> dict[str, str] | None:
     }
 
 
+def _redact_local_paths(value: str) -> str:
+    return ABSOLUTE_PATH_PATTERN.sub("<path>", value)
+
+
+def _report_errors(errors: list[str]) -> list[str]:
+    return [_redact_local_paths(error) for error in errors]
+
+
 def _recovery_hint(errors: list[str]) -> dict[str, Any] | None:
     error_code = _suggested_error_code(errors)
     if error_code is None:
@@ -154,6 +164,7 @@ def _recovery_hint(errors: list[str]) -> dict[str, Any] | None:
 
 def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, Any]:
     data = data or {}
+    report_errors = _report_errors(errors)
     return {
         "item_id": data.get("item_id"),
         "attempt_id": data.get("attempt_id"),
@@ -161,9 +172,9 @@ def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) ->
         "provider": data.get("provider"),
         "status": "failed" if errors else "passed",
         "suggested_error_code": _suggested_error_code(errors),
-        "failed_attempt_patch": _failed_attempt_patch(errors),
+        "failed_attempt_patch": _failed_attempt_patch(report_errors),
         "recovery_hint": _recovery_hint(errors),
-        "errors": errors,
+        "errors": report_errors,
     }
 
 

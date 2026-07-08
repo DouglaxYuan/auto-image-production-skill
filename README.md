@@ -170,7 +170,9 @@ before invoking the recovery planner. The inspector does not mutate the
 manifest; runners may apply `failed_attempt_patch.status`, `error_code`, and
 `error_detail` when they intentionally mark the attempt failed. Treat
 `recovery_hint` as a scheduling shortcut; run `plan_attempt_recovery.py` after
-the manifest is marked failed for the authoritative plan.
+the manifest is marked failed for the authoritative plan. JSON reports redact
+local absolute filesystem paths as `<path>` so scheduler logs do not persist
+machine-specific directories.
 It is only for attempts with downloaded candidate files; failed zero-candidate
 attempts should pass manifest validation but fail image inspection.
 
