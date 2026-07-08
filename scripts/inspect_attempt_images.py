@@ -151,8 +151,7 @@ def _replace_unsafe_display_characters(value: str) -> str:
 
 def _safe_report_error_value(value: str) -> str:
     redacted = _redact_local_paths(value)
-    safe_value = _replace_unsafe_display_characters(redacted)
-    return " ".join(safe_value.split())
+    return _replace_unsafe_display_characters(redacted)
 
 
 def _report_errors(errors: list[str]) -> list[str]:
@@ -310,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if errors else 0
 
     if errors:
-        for error in errors:
+        for error in _report_errors(errors):
             print(error, file=sys.stderr)
         return 1
 
