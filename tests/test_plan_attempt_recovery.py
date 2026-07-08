@@ -522,6 +522,17 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertIn("<path>", plan_text)
         self.assertNotIn(str(missing_manifest), plan_text)
 
+    def test_cli_stderr_redacts_validation_failure_absolute_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_manifest = Path(tmp) / "private" / "A-0001-001" / "attempt.json"
+
+            result = self.run_script(missing_manifest)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("<path>", result.stderr)
+        self.assertNotIn(str(missing_manifest), result.stderr)
+
     def test_cli_redacts_absolute_path_error_codes_from_plan(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

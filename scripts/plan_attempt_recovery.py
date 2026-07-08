@@ -431,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.json_errors:
             print(json.dumps(_validation_error_plan(errors), ensure_ascii=False, sort_keys=True))
             return 1
-        for error in errors:
+        for error in _report_errors(errors):
             print(error, file=sys.stderr)
         return 1
 
