@@ -144,6 +144,29 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("<path>", report_text)
         self.assertNotIn(str(missing_manifest), report_text)
 
+    def test_cli_json_redacts_absolute_selected_path_from_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.attempt_root(tmp)
+            data = self.valid_manifest(root)
+            absolute_path = root / "candidate-b.png"
+            data["selected_path"] = str(absolute_path)
+            manifest_path = self.write_manifest(root, data)
+
+            result = subprocess.run(
+                [sys.executable, str(self.script_path), "--json", str(manifest_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        report_text = json.dumps(report)
+        self.assertEqual("<path>", report["selected_path"])
+        self.assertIn("<path>", report_text)
+        self.assertNotIn(str(absolute_path), report_text)
+
     def test_failed_attempt_can_record_provider_interrupt_without_candidates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.staged_attempt_root(tmp)

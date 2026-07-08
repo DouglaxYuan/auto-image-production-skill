@@ -129,6 +129,13 @@ def _safe_report_identity_value(value: Any) -> str | None:
     return None
 
 
+def _safe_report_path_value(value: Any) -> str | None:
+    safe_value = _safe_report_identity_value(value)
+    if safe_value is None:
+        return None
+    return _redact_local_paths(safe_value)
+
+
 def _validation_report(
     errors: list[str], *, require_selected: bool, data: dict[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -149,7 +156,7 @@ def _validation_report(
     data = data or {}
     for field in REPORT_IDENTITY_FIELDS:
         report[field] = _safe_report_identity_value(data.get(field))
-    report["selected_path"] = _safe_report_identity_value(data.get("selected_path"))
+    report["selected_path"] = _safe_report_path_value(data.get("selected_path"))
     return report
 
 
