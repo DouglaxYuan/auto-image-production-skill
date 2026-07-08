@@ -680,6 +680,10 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual("needs_human", report["recovery_hint"]["action"])
         self.assertEqual(False, report["recovery_hint"]["retryable"])
         self.assertEqual(True, report["recovery_hint"]["requires_operator"])
+        self.assertEqual(
+            "ASSET-0001|doubao browser|captcha_required",
+            report["recovery_hint"]["operator_block_key"],
+        )
 
     def test_cli_json_omits_recovery_hint_when_images_pass(self):
         with tempfile.TemporaryDirectory() as tmp:

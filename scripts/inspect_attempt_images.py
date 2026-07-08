@@ -27,6 +27,7 @@ from scripts.plan_attempt_recovery import (  # noqa: E402
     POLICIES,
     _next_command_for_action,
     _normalized_error_code,
+    _operator_block_key,
     _requires_operator,
 )
 
@@ -197,6 +198,16 @@ def _recovery_hint(errors: list[str], data: dict[str, Any] | None = None) -> dic
     retry_after_seconds = policy.get("retry_after_seconds")
     if retry_after_seconds is not None:
         hint["retry_after_seconds"] = retry_after_seconds
+    plan_context = {
+        "item_id": data.get("item_id") if isinstance(data, dict) else None,
+        "provider": data.get("provider") if isinstance(data, dict) else None,
+        "error_code": error_code,
+        "normalized_error_code": error_code,
+        "requires_operator": hint["requires_operator"],
+    }
+    operator_block_key = _operator_block_key(plan_context)
+    if operator_block_key is not None:
+        hint["operator_block_key"] = operator_block_key
     return hint
 
 
