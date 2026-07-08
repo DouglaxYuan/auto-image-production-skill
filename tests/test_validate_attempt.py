@@ -363,6 +363,35 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertIn("manifest parent directory must not be a symlink:", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
+    def test_cli_rejects_manifest_item_directory_symlink_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            real_root = Path(tmp) / "real-ASSET-0001" / ".attempts" / "A-0001-001"
+            real_root.mkdir(parents=True)
+            data = self.valid_manifest(real_root)
+            data["item_id"] = "real-ASSET-0001"
+            self.write_manifest(real_root, data)
+            link_item = Path(tmp) / "ASSET-0001"
+            try:
+                link_item.symlink_to(real_root.parent.parent, target_is_directory=True)
+            except (NotImplementedError, OSError) as exc:
+                self.skipTest(f"symlink unsupported: {exc}")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.script_path),
+                    str(link_item / ".attempts" / "A-0001-001" / "attempt.json"),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout.strip())
+        self.assertIn("manifest item directory must not be a symlink:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_requires_result_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.attempt_root(tmp)
