@@ -90,7 +90,8 @@ def _normalized_mark(value: str) -> str:
 
 
 def _normalized_status(value: str) -> str:
-    return "_".join(value.replace("-", " ").split()).casefold()
+    separated = re.sub(r"[\-\u2010-\u2015]+", " ", value)
+    return "_".join(separated.split()).casefold()
 
 
 def _normalized_ocr_text(value: str) -> str:

@@ -94,6 +94,20 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual("attempt images valid", result.stdout.strip())
         self.assertEqual("", result.stderr.strip())
 
+    def test_cli_normalizes_passing_ocr_status_unicode_dashes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["ocr_status"] = " No\u2011Text "
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("attempt images valid", result.stdout.strip())
+        self.assertEqual("", result.stderr.strip())
+
     def test_cli_rejects_wrong_required_size(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
