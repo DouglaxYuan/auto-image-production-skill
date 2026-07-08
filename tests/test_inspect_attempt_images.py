@@ -594,6 +594,27 @@ class InspectAttemptImagesTest(unittest.TestCase):
             report.get("failed_attempt_patch"),
         )
 
+    def test_cli_can_persist_failed_attempt_patch_for_scheduler_closure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["visible_marks"] = ["doubao_ai_generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", "--write-failed-attempt", manifest_path)
+
+            self.assertEqual(0, result.returncode)
+            report = json.loads(result.stdout)
+            self.assertEqual("failed", report["status"])
+            updated = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual("failed", updated["status"])
+        self.assertEqual("forbidden_visible_mark", updated["error_code"])
+        self.assertIn("doubao_ai_generated", updated["error_detail"])
+        self.assertEqual("candidate-a.png", updated["selected_path"])
+        self.assertEqual(1, updated["candidate_count"])
+
     def test_cli_json_omits_failed_attempt_patch_when_images_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

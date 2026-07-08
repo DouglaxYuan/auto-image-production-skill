@@ -237,6 +237,22 @@ def _json_exit_code(errors: list[str], data: dict[str, Any] | None = None) -> in
     return 1
 
 
+def _write_failed_attempt_patch(path: Path, errors: list[str], data: dict[str, Any] | None) -> bool:
+    if not errors or not isinstance(data, dict) or data.get("status") == "failed":
+        return False
+    if validate_manifest(path):
+        return False
+
+    patch = _failed_attempt_patch(_report_errors(errors), data)
+    if patch is None:
+        return False
+
+    updated = dict(data)
+    updated.update(patch)
+    path.write_text(json.dumps(updated, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return True
+
+
 def _validate_candidate_ocr(
     index: int, candidate: dict[str, Any], rules: dict[str, Any], errors: list[str]
 ) -> None:
@@ -345,18 +361,32 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Write a machine-readable inspection report to stdout.",
     )
+    parser.add_argument(
+        "--write-failed-attempt",
+        action="store_true",
+        help="Persist a failed_attempt_patch back to a valid candidate attempt manifest.",
+    )
     parser.add_argument("manifest", help="Path to attempt manifest JSON")
     args = parser.parse_args(argv)
 
-    errors = inspect_attempt_images(args.manifest, required_size=args.require_size)
+    manifest_path = Path(args.manifest)
+    errors = inspect_attempt_images(manifest_path, required_size=args.require_size)
+    data = _load_json(manifest_path)
+    wrote_failed_attempt = False
+    if args.write_failed_attempt:
+        wrote_failed_attempt = _write_failed_attempt_patch(manifest_path, errors, data)
+
     if args.json:
-        data = _load_json(Path(args.manifest))
         print(json.dumps(_inspection_report(errors, data), ensure_ascii=False, sort_keys=True))
+        if wrote_failed_attempt:
+            return 0
         return _json_exit_code(errors, data)
 
     if errors:
         for error in _report_errors(errors):
             print(error, file=sys.stderr)
+        if wrote_failed_attempt:
+            return 0
         return 1
 
     print("attempt images valid")
