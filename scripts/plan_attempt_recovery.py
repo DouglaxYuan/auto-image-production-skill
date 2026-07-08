@@ -97,6 +97,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": None,
         "reason": "provider UI selector was not found or changed",
     },
+    "attempt_manifest_invalid": {
+        "action": "review_failure",
+        "failure_category": "automation_contract",
+        "retryable": False,
+        "retry_after_seconds": None,
+        "reason": "attempt manifest failed validation or bookkeeping contract checks",
+    },
     "generation_timeout": {
         "action": "retry",
         "failure_category": "provider_runtime",

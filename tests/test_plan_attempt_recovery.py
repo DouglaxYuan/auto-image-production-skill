@@ -169,6 +169,20 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual(True, plan["requires_operator"])
         self.assertEqual("inspect the failed attempt manifest", plan["next_command"])
 
+    def test_cli_classifies_attempt_manifest_invalid_as_automation_contract_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "attempt_manifest_invalid"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("review_failure", plan["action"])
+        self.assertEqual(False, plan["retryable"])
+        self.assertEqual("automation_contract", plan["failure_category"])
+        self.assertEqual(True, plan["requires_operator"])
+        self.assertEqual("inspect the failed attempt manifest", plan["next_command"])
+
     def test_cli_classifies_upload_failure_as_retry(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

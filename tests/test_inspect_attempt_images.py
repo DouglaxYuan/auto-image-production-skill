@@ -491,3 +491,31 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         report = json.loads(result.stdout)
         self.assertIsNone(report.get("recovery_hint"))
+
+    def test_cli_json_classifies_manifest_validation_errors_as_contract_failures(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data.pop("candidate_count")
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertEqual("attempt_manifest_invalid", report["suggested_error_code"])
+        self.assertEqual(
+            {
+                "status": "failed",
+                "error_code": "attempt_manifest_invalid",
+                "error_detail": (
+                    "Image inspection failed: missing required field: candidate_count; "
+                    "candidate_count must be a positive integer unless status is failed"
+                ),
+            },
+            report["failed_attempt_patch"],
+        )
+        self.assertEqual("review_failure", report["recovery_hint"]["action"])
+        self.assertEqual("automation_contract", report["recovery_hint"]["failure_category"])
+        self.assertEqual(True, report["recovery_hint"]["requires_operator"])

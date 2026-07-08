@@ -95,7 +95,7 @@ If a provider interrupts the run before returning candidates, keep the attempt i
 staging with `status: "failed"`, `error_code`, `error_detail`,
 `candidate_count: 0`, and `candidates: []`. Examples include `captcha_required`,
 `login_required`, `concurrency_limited`, `rate_limited`, `provider_busy`, `network_error`,
-`page_load_failed`, `browser_crashed`, `selector_not_found`, `moderation_blocked`, `upload_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`, and `ocr_status_failed`. This lets automation resume, back off, switch providers,
+`page_load_failed`, `browser_crashed`, `selector_not_found`, `attempt_manifest_invalid`, `moderation_blocked`, `upload_failed`, `download_failed`, `download_timeout`, `generation_timeout`, `no_candidates_found`, `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`, and `ocr_status_failed`. This lets automation resume, back off, switch providers,
 or request human intervention without losing the task record.
 
 Validate attempt bookkeeping while the attempt is still staged:
@@ -165,7 +165,7 @@ With `--json`, the inspector writes `item_id`, `attempt_id`, `task_id`,
 code already maps to a recovery policy. Schedulers can persist failures such as
 `forbidden_visible_mark`,
 `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`,
-`ocr_status_failed`, `no_candidates_found`, or `candidate_validation_failed`
+`ocr_status_failed`, `attempt_manifest_invalid`, `no_candidates_found`, or `candidate_validation_failed`
 before invoking the recovery planner. The inspector does not mutate the
 manifest; runners may apply `failed_attempt_patch.status`, `error_code`, and
 `error_detail` when they intentionally mark the attempt failed. Treat

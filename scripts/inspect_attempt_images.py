@@ -102,6 +102,14 @@ def _suggested_error_code(errors: list[str]) -> str | None:
         return None
 
     prioritized_error_codes = (
+        ("missing required field:", "attempt_manifest_invalid"),
+        ("manifest ", "attempt_manifest_invalid"),
+        ("candidate_count is", "attempt_manifest_invalid"),
+        ("result_binding ", "attempt_manifest_invalid"),
+        ("attempt_id ", "attempt_manifest_invalid"),
+        ("item_id ", "attempt_manifest_invalid"),
+        ("candidate path ", "attempt_manifest_invalid"),
+        ("selected_path ", "attempt_manifest_invalid"),
         ("contains forbidden visible mark", "forbidden_visible_mark"),
         ("contains forbidden OCR text", "forbidden_ocr_text"),
         ("missing OCR evidence", "missing_ocr_evidence"),
