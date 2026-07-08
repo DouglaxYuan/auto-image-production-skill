@@ -90,6 +90,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 60,
         "reason": "browser process or page crashed",
     },
+    "selector_not_found": {
+        "action": "review_failure",
+        "failure_category": "automation_contract",
+        "retryable": False,
+        "retry_after_seconds": None,
+        "reason": "provider UI selector was not found or changed",
+    },
     "generation_timeout": {
         "action": "retry",
         "failure_category": "provider_runtime",

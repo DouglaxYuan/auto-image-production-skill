@@ -95,7 +95,7 @@ If a provider interrupts the run before returning candidates, keep the attempt i
 staging with `status: "failed"`, `error_code`, `error_detail`,
 `candidate_count: 0`, and `candidates: []`. Examples include `captcha_required`,
 `login_required`, `concurrency_limited`, `rate_limited`, `provider_busy`, `network_error`,
-`page_load_failed`, `browser_crashed`, `moderation_blocked`, `download_failed`, and `generation_timeout`. This lets automation resume, back off, switch providers,
+`page_load_failed`, `browser_crashed`, `selector_not_found`, `moderation_blocked`, `download_failed`, and `generation_timeout`. This lets automation resume, back off, switch providers,
 or request human intervention without losing the task record.
 
 Validate attempt bookkeeping while the attempt is still staged:
@@ -112,7 +112,7 @@ python scripts/plan_attempt_recovery.py --max-retries 3 ITEM/.attempts/ATTEMPT_I
 
 The recovery planner returns JSON actions such as `needs_human`, `retry`,
 `backoff`, `quarantine`, `reroute_provider`, or `inspect_images`. Use it to keep
-CAPTCHA, login-required sessions, browser crashes, page load, network or download errors, provider-busy responses, rate limits, and concurrency limits from all
+CAPTCHA, login-required sessions, browser crashes, missing UI selectors, page load, network or download errors, provider-busy responses, rate limits, and concurrency limits from all
 collapsing into the same interrupted state. It normalizes error-code whitespace
 or hyphen separators for policy lookup while preserving the original
 `error_code` in the returned plan; failed plans also include
@@ -125,7 +125,7 @@ the configured budget, and `next_retry_count` so the next attempt records the
 incremented counter. `retry_after_seconds` grows with `retry_count` and is
 capped at one hour, so repeated network or queue failures do not retry in a
 tight loop. `failure_category` groups failures for logging and alert routing,
-for example `network`, `capacity`, `human_intervention`, `quality_gate`, or
+for example `network`, `capacity`, `human_intervention`, `automation_contract`, `quality_gate`, or
 `compliance`. `requires_operator` marks plans that must leave the automation
 loop for a human decision, such as CAPTCHA, moderation, or exhausted retry
 budgets. The `next_command` field is action-specific, for example `request

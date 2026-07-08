@@ -67,7 +67,7 @@ The validator checks manifest path/read errors, symlinked manifest files, attemp
 
 The image inspector checks downloaded candidate files after manifest validation. It fails when an attempt has no candidate images to inspect. It decodes images with Pillow, optionally enforces exact dimensions, rejects duplicate candidate bytes by SHA-256, and enforces recorded OCR/visible-mark evidence. Use `quality_rules.require_ocr_evidence`, `quality_rules.reject_any_ocr_text`, `quality_rules.forbidden_ocr_text`, and `quality_rules.forbidden_visible_marks` with candidate fields such as `ocr_status`, `ocr_text`, and `visible_marks`. OCR status checks normalize whitespace or hyphen separators and match case-insensitively, and forbidden-text checks collapse whitespace before matching case-insensitively, but statuses that claim no text must not be paired with non-empty `ocr_text`. Visible-mark checks collapse whitespace and match case-insensitively so provider mark variants do not bypass rejection. Blank forbidden text or visible-mark entries are ignored after normalization.
 
-For provider interruptions such as CAPTCHA, quota, provider-busy responses, browser crashes, network errors, rate limits, or concurrency limits, write a failed attempt instead of abandoning local state:
+For provider interruptions such as CAPTCHA, quota, provider-busy responses, browser crashes, missing UI selectors, network errors, rate limits, or concurrency limits, write a failed attempt instead of abandoning local state:
 
 ```json
 {
@@ -86,8 +86,10 @@ For provider interruptions such as CAPTCHA, quota, provider-busy responses, brow
 
 Then run `plan_attempt_recovery.py` to classify the next action. It should route
 interactive verification and login-required sessions to `needs_human`, transient
-browser crashes, page load, network, download, and timeout failures to `retry`, provider-busy responses, model rate limits, and concurrency pressure to
-`backoff`, and quality/provider mark failures to reroute or quarantine actions.
+browser crashes, page load, network, download, and timeout failures to `retry`,
+provider-busy responses, model rate limits, and concurrency pressure to
+`backoff`, missing UI selectors to `review_failure`, and quality/provider mark
+failures to reroute or quarantine actions.
 The planner normalizes error-code whitespace or hyphen separators for policy
 lookup while preserving the original `error_code` in the returned plan; failed
 plans also include `normalized_error_code` for scheduler diagnostics.
@@ -96,7 +98,8 @@ For retryable failures, increment a numeric `retry_count`; when it reaches
 `--max-retries` must be a positive integer. Retryable plans include
 `max_retries`, `remaining_retries`, `next_retry_count`, and a
 `retry_after_seconds` delay that grows with `retry_count` and caps at one hour.
-`failure_category` groups failures for logging and alert routing.
+`failure_category` groups failures for logging and alert routing, including
+automation-contract failures such as missing provider UI selectors.
 `requires_operator` marks plans that must leave the automation loop for a human
 decision. `next_command` is action-specific so a scheduler can tell human
 intervention apart from retry and reroute actions.
