@@ -94,7 +94,7 @@ def _normalized_status(value: str) -> str:
 
 
 def _normalized_ocr_text(value: str) -> str:
-    separated = re.sub(r"[_-]+", " ", value)
+    separated = re.sub(r"[_\-\u2010-\u2015]+", " ", value)
     return " ".join(separated.split()).casefold()
 
 

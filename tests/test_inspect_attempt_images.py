@@ -284,6 +284,21 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("candidate 1 contains forbidden OCR text: AI generated", result.stderr)
 
+    def test_cli_normalizes_forbidden_ocr_text_unicode_dashes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["forbidden_ocr_text"] = ["AI generated"]
+            data["candidates"][0]["ocr_status"] = "passed"
+            data["candidates"][0]["ocr_text"] = "AI\u2011generated"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("candidate 1 contains forbidden OCR text: AI generated", result.stderr)
+
     def test_cli_sanitizes_unsafe_characters_in_stderr_errors(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
