@@ -292,3 +292,114 @@ class InspectAttemptImagesTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode)
         self.assertIn("attempt has no candidate images to inspect", result.stderr)
+
+    def test_cli_json_reports_suggested_failure_code_for_forbidden_visible_mark(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["visible_marks"] = ["doubao_ai_generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("failed", report["status"])
+        self.assertEqual("forbidden_visible_mark", report["suggested_error_code"])
+        self.assertIn(
+            "candidate 1 contains forbidden visible mark: doubao_ai_generated",
+            report["errors"],
+        )
+
+    def test_cli_json_reports_suggested_failure_code_for_missing_ocr_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0].pop("ocr_status")
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("missing_ocr_evidence", report["suggested_error_code"])
+
+    def test_cli_json_reports_suggested_failure_code_for_ocr_text_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["reject_any_ocr_text"] = True
+            data["candidates"][0]["ocr_text"] = "SALE"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("ocr_text_detected", report["suggested_error_code"])
+
+    def test_cli_json_reports_suggested_failure_code_for_forbidden_ocr_text(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["forbidden_ocr_text"] = ["sale"]
+            data["candidates"][0]["ocr_status"] = "passed"
+            data["candidates"][0]["ocr_text"] = "summer sale"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("forbidden_ocr_text", report["suggested_error_code"])
+
+    def test_cli_json_reports_suggested_failure_code_for_ocr_status_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["ocr_status"] = "failed"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("ocr_status_failed", report["suggested_error_code"])
+
+    def test_cli_json_reports_candidate_validation_failure_for_other_quality_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            result = self.run_script("--json", "--require-size", "2048x2048", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("candidate_validation_failed", report["suggested_error_code"])
+
+    def test_cli_json_reports_passing_status_without_suggested_failure_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        report = json.loads(result.stdout)
+        self.assertEqual("passed", report["status"])
+        self.assertEqual([], report["errors"])
+        self.assertIsNone(report["suggested_error_code"])

@@ -92,6 +92,33 @@ def _candidate_has_ocr_evidence(candidate: dict[str, Any]) -> bool:
     return isinstance(candidate.get("ocr_status"), str) or isinstance(candidate.get("ocr_text"), str)
 
 
+def _suggested_error_code(errors: list[str]) -> str | None:
+    if not errors:
+        return None
+
+    prioritized_error_codes = (
+        ("contains forbidden visible mark", "forbidden_visible_mark"),
+        ("contains forbidden OCR text", "forbidden_ocr_text"),
+        ("missing OCR evidence", "missing_ocr_evidence"),
+        ("contains OCR text while reject_any_ocr_text is enabled", "ocr_text_detected"),
+        ("OCR status is not passing", "ocr_status_failed"),
+        ("conflicts with non-empty OCR text", "ocr_status_failed"),
+        ("attempt has no candidate images to inspect", "no_candidates_found"),
+    )
+    for needle, error_code in prioritized_error_codes:
+        if any(needle in error for error in errors):
+            return error_code
+    return "candidate_validation_failed"
+
+
+def _inspection_report(errors: list[str]) -> dict[str, Any]:
+    return {
+        "status": "failed" if errors else "passed",
+        "suggested_error_code": _suggested_error_code(errors),
+        "errors": errors,
+    }
+
+
 def _validate_candidate_ocr(
     index: int, candidate: dict[str, Any], rules: dict[str, Any], errors: list[str]
 ) -> None:
@@ -195,10 +222,19 @@ def main(argv: list[str] | None = None) -> int:
         type=_parse_size,
         help="Require each candidate image to be exactly WIDTHxHEIGHT.",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Write a machine-readable inspection report to stdout.",
+    )
     parser.add_argument("manifest", help="Path to attempt manifest JSON")
     args = parser.parse_args(argv)
 
     errors = inspect_attempt_images(args.manifest, required_size=args.require_size)
+    if args.json:
+        print(json.dumps(_inspection_report(errors), ensure_ascii=False, sort_keys=True))
+        return 1 if errors else 0
+
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

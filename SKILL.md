@@ -70,6 +70,7 @@ Treat each requested output as one stable item. The reusable contract is:
    - Require `2048x2048` for final selected images unless the batch spec changes.
    - Check duplicate hashes within the attempt and across completed item outputs.
    - OCR or otherwise scan for prohibited text or marks, and reject contradictory OCR metadata.
+   - Use `inspect_attempt_images.py --json` when schedulers need structured `suggested_error_code` values for local quality-gate failures.
    - Treat provider/source marks as quality-gate evidence: reject, reroute, or use an approved watermark-free export path rather than removing provenance marks after download.
    - Write candidate, selection, and commit records.
    - Re-run tests and reconcile after code changes or real generation.

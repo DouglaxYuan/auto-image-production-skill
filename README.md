@@ -145,6 +145,12 @@ Inspect downloaded image files before publish-time selection:
 python scripts/inspect_attempt_images.py --require-size 2048x2048 ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
 
+Automation runners can request a structured report for diagnostics and failed-attempt routing:
+
+```bash
+python scripts/inspect_attempt_images.py --json --require-size 2048x2048 ITEM/.attempts/ATTEMPT_ID/attempt.json
+```
+
 The image inspection step decodes each candidate, checks exact dimensions when requested,
 rejects duplicate candidate bytes, and enforces recorded OCR/visible-mark evidence such as
 `quality_rules.reject_any_ocr_text` and `quality_rules.forbidden_visible_marks`.
@@ -153,6 +159,11 @@ collapse whitespace before matching case-insensitively,
 but statuses that claim no text must not include non-empty `ocr_text`.
 Visible-mark checks collapse whitespace and match case-insensitively.
 Blank forbidden text or visible-mark entries are ignored after normalization.
+With `--json`, the inspector writes `status`, `errors`, and `suggested_error_code`
+to stdout so schedulers can persist failures such as `forbidden_visible_mark`,
+`forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`,
+`ocr_status_failed`, `no_candidates_found`, or `candidate_validation_failed`
+before invoking the recovery planner.
 It is only for attempts with downloaded candidate files; failed zero-candidate
 attempts should pass manifest validation but fail image inspection.
 
