@@ -31,6 +31,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `captcha_required`
 - `browser_session_not_authenticated`
 - `concurrency_limited`
+- `rate_limited`
 - `network_error`
 - `moderation_blocked`
 - `quota_exhausted`
