@@ -22,6 +22,7 @@ REQUIRED_FIELDS = (
     "result_binding",
     "candidates",
 )
+FAILED_STATUS = "failed"
 
 UNICODE_PATH_SEPARATOR_LOOKALIKES = frozenset(
     (
@@ -401,6 +402,22 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             if _identity_has_unsafe_character(value, field, errors):
                 unsafe_identity_fields.add(field)
 
+    status = data.get("status")
+    is_failed_attempt = status == FAILED_STATUS
+    if status is not None:
+        if not _is_non_empty_string(status):
+            errors.append("status must be a non-empty string when present")
+        elif _identity_has_unsafe_character(status, "status", errors):
+            pass
+
+    if is_failed_attempt:
+        for field in ("error_code", "error_detail"):
+            value = data.get(field)
+            if not _is_non_empty_string(value):
+                errors.append(f"failed attempts require non-empty {field}")
+            elif _identity_has_unsafe_character(value, field, errors):
+                pass
+
     attempt_id = data.get("attempt_id")
     if (
         "attempt_id" not in unsafe_identity_fields
@@ -425,8 +442,13 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
         task_id = ""
 
     candidate_count = data.get("candidate_count")
-    if not isinstance(candidate_count, int) or isinstance(candidate_count, bool) or candidate_count < 1:
-        errors.append("candidate_count must be a positive integer")
+    if (
+        not isinstance(candidate_count, int)
+        or isinstance(candidate_count, bool)
+        or candidate_count < 0
+        or (candidate_count == 0 and not is_failed_attempt)
+    ):
+        errors.append("candidate_count must be a positive integer unless status is failed")
         candidate_count = None
 
     candidates = data.get("candidates")

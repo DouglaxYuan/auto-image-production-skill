@@ -97,6 +97,69 @@ class ValidateAttemptManifestTest(unittest.TestCase):
         self.assertEqual("", result.stdout.strip())
         self.assertIn("candidate_count is 3 but candidates has 2 entries", result.stderr)
 
+    def test_failed_attempt_can_record_provider_interrupt_without_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.staged_attempt_root(tmp)
+            data = {
+                "item_id": "ASSET-0001",
+                "attempt_id": root.name,
+                "task_id": "ASSET-0001-A001",
+                "provider": "doubao browser",
+                "status": "failed",
+                "error_code": "captcha_required",
+                "error_detail": "Provider requested interactive image CAPTCHA after submit.",
+                "candidate_count": 0,
+                "result_binding": {
+                    "task_id": "ASSET-0001-A001",
+                    "method": "provider interrupted before returning candidates",
+                },
+                "candidates": [],
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertEqual([], errors)
+
+    def test_failed_attempt_requires_error_code_and_detail(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.staged_attempt_root(tmp)
+            data = {
+                "item_id": "ASSET-0001",
+                "attempt_id": root.name,
+                "task_id": "ASSET-0001-A001",
+                "provider": "doubao browser",
+                "status": "failed",
+                "candidate_count": 0,
+                "result_binding": "TASK-ID ASSET-0001-A001 failed before download",
+                "candidates": [],
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("failed attempts require non-empty error_code", errors)
+        self.assertIn("failed attempts require non-empty error_detail", errors)
+
+    def test_candidate_count_zero_requires_failed_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.staged_attempt_root(tmp)
+            data = {
+                "item_id": "ASSET-0001",
+                "attempt_id": root.name,
+                "task_id": "ASSET-0001-A001",
+                "provider": "doubao browser",
+                "status": "submitted",
+                "candidate_count": 0,
+                "result_binding": "TASK-ID ASSET-0001-A001 is still pending",
+                "candidates": [],
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            errors = validate_manifest(manifest_path)
+
+        self.assertIn("candidate_count must be a positive integer unless status is failed", errors)
+
     def test_cli_reports_directory_path_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             result = subprocess.run(

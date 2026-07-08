@@ -53,7 +53,7 @@ Treat each requested output as one stable item. The reusable contract is:
    - Create one attempt id per submission, e.g. `A-068-004`.
    - Write new candidates only to `ITEM/.attempts/ATTEMPT_ID/`.
    - Advance durable state through `prepared -> submitting -> submitted -> generated -> downloaded -> validated -> selected -> committed`.
-   - Record failures with `error_code` and `error_detail`; do not silently retry.
+   - Record failures with `status: "failed"`, `error_code`, and `error_detail`; do not silently retry. Failed attempts may use `candidate_count: 0` and `candidates: []` when the provider returns no images.
    - Publish only after the expected candidates are downloaded, decoded, dimension-checked, hash-checked, OCR-checked, selected, and recorded in durable state.
    - Publish to `ITEM/attempts/ATTEMPT_ID/` and atomically point `ITEM/current` at the successful attempt.
 
@@ -69,6 +69,7 @@ Treat each requested output as one stable item. The reusable contract is:
    - Require `2048x2048` for final selected images unless the batch spec changes.
    - Check duplicate hashes within the attempt and across completed item outputs.
    - OCR or otherwise scan for prohibited text or marks.
+   - Treat provider/source marks as quality-gate evidence: reject, reroute, or use an approved watermark-free export path rather than removing provenance marks after download.
    - Write candidate, selection, and commit records.
    - Re-run tests and reconcile after code changes or real generation.
 
@@ -86,7 +87,7 @@ When moving from one image provider to another, keep the local contract unchange
 
 - The provider must accept source asset attachment(s), generation rules, prompt text, and a TASK-ID.
 - The provider adapter must return exactly the candidate images for the active task, not a page-wide scrape.
-- The adapter must expose clear failure types: quota, moderation, upload-not-ready, send-failed, generation-timeout, and result-binding-failed.
+- The adapter must expose clear failure types: captcha-required, quota, concurrency-limited, network-error, moderation, upload-not-ready, send-failed, generation-timeout, and result-binding-failed.
 - The pipeline owns storage, validation, selection, durable state, and export. The provider owns only submission and task-bound candidate retrieval.
 - Prefer isolating each provider behind a small adapter with `submit`, `wait`, `download`, and `classify_failure` behavior.
 
@@ -98,11 +99,17 @@ Adapt these checks to the current project:
 git status --short
 python scripts/validate_attempt.py path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python scripts/validate_attempt.py --require-selected path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
+python scripts/inspect_attempt_images.py --require-size 2048x2048 path/to/ITEM/.attempts/ATTEMPT_ID/attempt.json
 python -m unittest discover -s tests -q
 python -m compileall -q src scripts tests
 sqlite3 path/to/image_pipeline.sqlite 'PRAGMA integrity_check;'
 sqlite3 path/to/image_pipeline.sqlite 'PRAGMA foreign_key_check;'
 ```
+
+Use `validate_attempt.py` for both successful and failed attempts. Use
+`inspect_attempt_images.py` only after candidate files have been downloaded; a
+failed zero-candidate attempt should stay recorded but should not pass image
+inspection.
 
 ## Hard Stops
 
@@ -111,6 +118,7 @@ sqlite3 path/to/image_pipeline.sqlite 'PRAGMA foreign_key_check;'
 - Do not generate from blocked source images.
 - Do not resubmit already complete items unless the user explicitly asks and the previous output is quarantined or superseded.
 - Do not use page-wide image scraping as recovery.
+- Do not remove third-party provenance or AI-generated watermarks as a post-processing shortcut; detect them and fail or route to an approved export/provider path.
 - Do not copy failed staging artifacts into `current`.
 - Do not modify `state/automation.sqlite` for image-pipeline state.
 - Do not overwrite production registry from partial state exports.

@@ -91,6 +91,13 @@ ITEM/
 
 Only after candidates pass validation and a final image is selected should the attempt be published and `current` moved to the successful attempt. This prevents failed, partial, duplicate, or mismatched images from polluting the final output.
 
+If a provider interrupts the run before returning candidates, keep the attempt in
+staging with `status: "failed"`, `error_code`, `error_detail`,
+`candidate_count: 0`, and `candidates: []`. Examples include `captcha_required`,
+`concurrency_limited`, `network_error`, `moderation_blocked`, and
+`generation_timeout`. This lets automation resume, back off, switch providers,
+or request human intervention without losing the task record.
+
 Validate attempt bookkeeping while the attempt is still staged:
 
 ```bash
@@ -103,12 +110,25 @@ Before publishing a successful attempt, also require the manifest to name the se
 python scripts/validate_attempt.py --require-selected ITEM/.attempts/ATTEMPT_ID/attempt.json
 ```
 
+Inspect downloaded image files before publish-time selection:
+
+```bash
+python scripts/inspect_attempt_images.py --require-size 2048x2048 ITEM/.attempts/ATTEMPT_ID/attempt.json
+```
+
+The image inspection step decodes each candidate, checks exact dimensions when requested,
+rejects duplicate candidate bytes, and enforces recorded OCR/visible-mark evidence such as
+`quality_rules.forbidden_visible_marks`. It is only for attempts with downloaded
+candidate files; failed zero-candidate attempts should pass manifest validation
+but fail image inspection.
+
 ## 注意事项
 
 - 不要把第三方模型页面里的历史图片当成本次结果。
 - 每次提交都要有唯一 `TASK-ID` 或 provider task id。
 - 不要生成来源素材中已经命中禁用规则的任务。
 - 不要跳过尺寸、OCR、重复哈希和业务质量检查。
+- 不要把第三方平台来源标识或 AI 生成水印作为后处理去除目标；应自动检测并拒收，或切换到合规的无水印导出/provider。
 - 不要把失败 attempt 的 staging 文件复制到最终目录。
 - 不要用部分导出的 registry 覆盖生产 registry。
 - 不要在公开仓库提交真实客户数据、账号信息、cookie、token、本机绝对路径或未脱敏的业务批次状态。
@@ -119,4 +139,5 @@ python scripts/validate_attempt.py --require-selected ITEM/.attempts/ATTEMPT_ID/
 - `references/prompt-and-output-contract.md`: provider-agnostic prompt/output contract
 - `references/asset-example.md`: neutral example
 - `scripts/validate_attempt.py`: local attempt manifest validator
+- `scripts/inspect_attempt_images.py`: downloaded candidate image quality gate
 - `agents/openai.yaml`: UI metadata for Codex
