@@ -142,6 +142,7 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("retry", plan["action"])
         self.assertEqual(True, plan["retryable"])
         self.assertEqual(1, plan["remaining_retries"])
+        self.assertEqual(3, plan["max_retries"])
 
     def test_cli_reports_zero_remaining_retries_after_budget_is_exhausted(self):
         with tempfile.TemporaryDirectory() as tmp:

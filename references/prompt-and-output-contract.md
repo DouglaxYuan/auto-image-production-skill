@@ -91,8 +91,9 @@ network and timeout failures to `retry`, model concurrency pressure to
 For retryable failures, increment a numeric `retry_count`; when it reaches
 `--max-retries`, the planner returns `review_failure` instead of another retry.
 `--max-retries` must be a positive integer. Retryable plans include
-`remaining_retries` for automation schedulers. `next_command` is action-specific
-so a scheduler can tell human intervention apart from retry and reroute actions.
+`max_retries` and `remaining_retries` for automation schedulers. `next_command`
+is action-specific so a scheduler can tell human intervention apart from retry
+and reroute actions.
 
 ## Result Validation
 

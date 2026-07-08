@@ -172,6 +172,7 @@ def plan_attempt_recovery(
             plan.update(policy)
             plan["next_command"] = _next_command_for_action(plan.get("action"))
             if policy.get("retryable"):
+                plan["max_retries"] = max_retries
                 plan["remaining_retries"] = _remaining_retries(data, max_retries)
             if policy.get("retryable") and _retry_budget_exhausted(data, max_retries):
                 plan.update(
