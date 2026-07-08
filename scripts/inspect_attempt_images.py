@@ -111,6 +111,17 @@ def _suggested_error_code(errors: list[str]) -> str | None:
     return "candidate_validation_failed"
 
 
+def _failed_attempt_patch(errors: list[str]) -> dict[str, str] | None:
+    error_code = _suggested_error_code(errors)
+    if error_code is None:
+        return None
+    return {
+        "status": "failed",
+        "error_code": error_code,
+        "error_detail": f"Image inspection failed: {'; '.join(errors)}",
+    }
+
+
 def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, Any]:
     data = data or {}
     return {
@@ -120,6 +131,7 @@ def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) ->
         "provider": data.get("provider"),
         "status": "failed" if errors else "passed",
         "suggested_error_code": _suggested_error_code(errors),
+        "failed_attempt_patch": _failed_attempt_patch(errors),
         "errors": errors,
     }
 

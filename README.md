@@ -160,11 +160,14 @@ but statuses that claim no text must not include non-empty `ocr_text`.
 Visible-mark checks collapse whitespace and match case-insensitively.
 Blank forbidden text or visible-mark entries are ignored after normalization.
 With `--json`, the inspector writes `item_id`, `attempt_id`, `task_id`,
-`provider`, `status`, `errors`, and `suggested_error_code` to stdout so
-schedulers can persist failures such as `forbidden_visible_mark`,
+`provider`, `status`, `errors`, `suggested_error_code`, and
+`failed_attempt_patch` to stdout so schedulers can persist failures such as
+`forbidden_visible_mark`,
 `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`,
 `ocr_status_failed`, `no_candidates_found`, or `candidate_validation_failed`
-before invoking the recovery planner.
+before invoking the recovery planner. The inspector does not mutate the
+manifest; runners may apply `failed_attempt_patch.status`, `error_code`, and
+`error_detail` when they intentionally mark the attempt failed.
 It is only for attempts with downloaded candidate files; failed zero-candidate
 attempts should pass manifest validation but fail image inspection.
 

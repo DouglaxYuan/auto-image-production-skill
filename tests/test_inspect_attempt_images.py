@@ -420,3 +420,39 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual("A-0001-001", report.get("attempt_id"))
         self.assertEqual("ASSET-0001-A001", report.get("task_id"))
         self.assertEqual("browser image tool", report.get("provider"))
+
+    def test_cli_json_includes_failed_attempt_patch_for_scheduler_persistence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["visible_marks"] = ["doubao_ai_generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertEqual(
+            {
+                "status": "failed",
+                "error_code": "forbidden_visible_mark",
+                "error_detail": (
+                    "Image inspection failed: candidate 1 contains forbidden visible "
+                    "mark: doubao_ai_generated"
+                ),
+            },
+            report.get("failed_attempt_patch"),
+        )
+
+    def test_cli_json_omits_failed_attempt_patch_when_images_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.valid_manifest(root))
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(0, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertIsNone(report.get("failed_attempt_patch"))
