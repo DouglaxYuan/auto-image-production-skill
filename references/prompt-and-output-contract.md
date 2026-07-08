@@ -90,6 +90,7 @@ network and timeout failures to `retry`, model concurrency pressure to
 `backoff`, and quality/provider mark failures to reroute or quarantine actions.
 For retryable failures, increment a numeric `retry_count`; when it reaches
 `--max-retries`, the planner returns `review_failure` instead of another retry.
+`--max-retries` must be a positive integer.
 
 ## Result Validation
 

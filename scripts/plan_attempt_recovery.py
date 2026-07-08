@@ -100,6 +100,16 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     return data
 
 
+def _positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--max-retries must be a positive integer") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("--max-retries must be a positive integer")
+    return parsed
+
+
 def _base_plan(data: dict[str, Any]) -> dict[str, Any]:
     return {
         "item_id": data.get("item_id"),
@@ -172,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--max-retries",
-        type=int,
+        type=_positive_int,
         default=3,
         help="Maximum retry_count allowed before escalating retryable failures.",
     )

@@ -139,3 +139,14 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
 
         self.assertEqual("retry", plan["action"])
         self.assertEqual(True, plan["retryable"])
+
+    def test_cli_rejects_non_positive_max_retries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "network_error"))
+
+            result = self.run_script("--max-retries", "0", manifest_path)
+
+        self.assertEqual(2, result.returncode)
+        self.assertIn("--max-retries must be a positive integer", result.stderr)
