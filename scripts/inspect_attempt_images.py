@@ -80,6 +80,10 @@ def _normalized_mark(value: str) -> str:
     return value.strip().casefold()
 
 
+def _normalized_status(value: str) -> str:
+    return value.strip().casefold()
+
+
 def _candidate_has_ocr_evidence(candidate: dict[str, Any]) -> bool:
     return isinstance(candidate.get("ocr_status"), str) or isinstance(candidate.get("ocr_text"), str)
 
@@ -91,12 +95,13 @@ def _validate_candidate_ocr(
         errors.append(f"candidate {index} missing OCR evidence")
 
     ocr_status = candidate.get("ocr_status")
-    if isinstance(ocr_status, str) and ocr_status not in PASSING_OCR_STATUSES:
+    normalized_status = _normalized_status(ocr_status) if isinstance(ocr_status, str) else None
+    if normalized_status is not None and normalized_status not in PASSING_OCR_STATUSES:
         errors.append(f"candidate {index} OCR status is not passing: {ocr_status}")
 
     ocr_text = candidate.get("ocr_text")
     if isinstance(ocr_text, str):
-        if isinstance(ocr_status, str) and ocr_status in NO_TEXT_OCR_STATUSES and ocr_text.strip():
+        if normalized_status in NO_TEXT_OCR_STATUSES and ocr_text.strip():
             errors.append(
                 f"candidate {index} OCR status {ocr_status} conflicts with non-empty OCR text"
             )
