@@ -85,7 +85,7 @@ For provider interruptions such as CAPTCHA, quota, network errors, rate limits, 
 ```
 
 Then run `plan_attempt_recovery.py` to classify the next action. It should route
-interactive verification and logged-out sessions to `needs_human`, transient
+interactive verification and login-required sessions to `needs_human`, transient
 network, download, and timeout failures to `retry`, model rate limits and concurrency pressure to
 `backoff`, and quality/provider mark failures to reroute or quarantine actions.
 The planner normalizes error-code whitespace or hyphen separators for policy

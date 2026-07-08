@@ -34,6 +34,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": None,
         "reason": "provider browser session is not logged in",
     },
+    "login_required": {
+        "action": "needs_human",
+        "failure_category": "human_intervention",
+        "retryable": False,
+        "retry_after_seconds": None,
+        "reason": "provider requires an authenticated browser session",
+    },
     "concurrency_limited": {
         "action": "backoff",
         "failure_category": "capacity",

@@ -66,6 +66,19 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertIn("requires_operator", plan)
         self.assertEqual(True, plan["requires_operator"])
 
+    def test_cli_classifies_login_required_as_human_intervention(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "login_required"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("needs_human", plan["action"])
+        self.assertEqual(False, plan["retryable"])
+        self.assertEqual("human_intervention", plan["failure_category"])
+        self.assertEqual("request human intervention", plan["next_command"])
+
     def test_cli_classifies_concurrency_limit_as_backoff(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
