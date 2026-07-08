@@ -114,8 +114,8 @@ The recovery planner returns JSON actions such as `needs_human`, `retry`,
 `backoff`, `quarantine`, `reroute_provider`, or `inspect_images`. Use it to keep
 CAPTCHA, logged-out sessions, network errors, and concurrency limits from all
 collapsing into the same interrupted state. For retryable failures, record a
-numeric `retry_count`; when it reaches `--max-retries`, the planner escalates to
-`review_failure` instead of looping forever.
+non-negative integer `retry_count`; when it reaches `--max-retries`, the planner
+escalates to `review_failure` instead of looping forever.
 
 Before publishing a successful attempt, also require the manifest to name the selected candidate:
 

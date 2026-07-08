@@ -160,6 +160,20 @@ class ValidateAttemptManifestTest(unittest.TestCase):
 
         self.assertIn("candidate_count must be a positive integer unless status is failed", errors)
 
+    def test_retry_count_must_be_non_negative_integer_when_present(self):
+        cases = ("3", -1, True)
+        for value in cases:
+            with self.subTest(value=value):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = self.staged_attempt_root(tmp)
+                    data = self.valid_manifest(root)
+                    data["retry_count"] = value
+                    manifest_path = self.write_manifest(root, data)
+
+                    errors = validate_manifest(manifest_path)
+
+                self.assertIn("retry_count must be a non-negative integer when present", errors)
+
     def test_cli_reports_directory_path_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             result = subprocess.run(

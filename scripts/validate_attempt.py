@@ -418,6 +418,12 @@ def validate_manifest(manifest_path: str | Path, *, require_selected: bool = Fal
             elif _identity_has_unsafe_character(value, field, errors):
                 pass
 
+    retry_count = data.get("retry_count")
+    if retry_count is not None and (
+        not isinstance(retry_count, int) or isinstance(retry_count, bool) or retry_count < 0
+    ):
+        errors.append("retry_count must be a non-negative integer when present")
+
     attempt_id = data.get("attempt_id")
     if (
         "attempt_id" not in unsafe_identity_fields

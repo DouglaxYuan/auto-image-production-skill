@@ -16,6 +16,7 @@ Use this contract for automated image-production workflows.
 - `commit_target`: final output path, filename pattern, manifest/registry destination.
 - `quality_rules`: optional local gates for downloaded files, such as required OCR evidence, forbidden OCR text, or forbidden visible marks recorded by the provider adapter/OCR step.
 - `status`, `error_code`, and `error_detail`: required in an attempt manifest when the provider fails before usable candidates are downloaded.
+- `retry_count`: optional non-negative integer for retryable failed attempts.
 
 ## Default Attempt Layout
 
