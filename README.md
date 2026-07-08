@@ -146,7 +146,7 @@ rejects duplicate candidate bytes, and enforces recorded OCR/visible-mark eviden
 OCR status checks trim whitespace and match case-insensitively, and forbidden-text checks
 collapse whitespace before matching case-insensitively,
 but statuses that claim no text must not include non-empty `ocr_text`.
-Visible-mark checks trim whitespace and match case-insensitively.
+Visible-mark checks collapse whitespace and match case-insensitively.
 It is only for attempts with downloaded candidate files; failed zero-candidate
 attempts should pass manifest validation but fail image inspection.
 

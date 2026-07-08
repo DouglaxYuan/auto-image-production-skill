@@ -77,7 +77,7 @@ def _string_list(value: Any) -> list[str]:
 
 
 def _normalized_mark(value: str) -> str:
-    return value.strip().casefold()
+    return " ".join(value.split()).casefold()
 
 
 def _normalized_status(value: str) -> str:

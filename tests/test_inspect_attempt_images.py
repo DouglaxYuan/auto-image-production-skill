@@ -149,6 +149,23 @@ class InspectAttemptImagesTest(unittest.TestCase):
             result.stderr,
         )
 
+    def test_cli_normalizes_forbidden_visible_mark_whitespace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["forbidden_visible_marks"] = ["doubao ai generated"]
+            data["candidates"][0]["visible_marks"] = ["Doubao\nAI   Generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "candidate 1 contains forbidden visible mark: doubao ai generated",
+            result.stderr,
+        )
+
     def test_cli_rejects_missing_required_ocr_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
