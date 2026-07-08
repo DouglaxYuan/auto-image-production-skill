@@ -169,13 +169,17 @@ def _recovery_hint(errors: list[str]) -> dict[str, Any] | None:
     if policy is None:
         return None
     action = policy.get("action")
-    return {
+    hint = {
         "action": action,
         "failure_category": policy.get("failure_category"),
         "retryable": policy.get("retryable"),
         "requires_operator": _requires_operator(action),
         "next_command": _next_command_for_action(action),
     }
+    retry_after_seconds = policy.get("retry_after_seconds")
+    if retry_after_seconds is not None:
+        hint["retry_after_seconds"] = retry_after_seconds
+    return hint
 
 
 def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, Any]:

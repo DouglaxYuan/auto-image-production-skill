@@ -629,6 +629,31 @@ class InspectAttemptImagesTest(unittest.TestCase):
             report.get("recovery_hint"),
         )
 
+    def test_cli_json_includes_retry_delay_in_recovery_hint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = {
+                "item_id": "ASSET-0001",
+                "attempt_id": "A-0001-001",
+                "task_id": "ASSET-0001-A001",
+                "provider": "doubao browser",
+                "status": "failed",
+                "error_code": "captcha_required",
+                "error_detail": "Provider requested interactive CAPTCHA before download.",
+                "candidate_count": 0,
+                "result_binding": "TASK-ID ASSET-0001-A001 failed before candidates",
+                "candidates": [],
+            }
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        report = json.loads(result.stdout)
+        self.assertEqual("no_candidates_found", report["suggested_error_code"])
+        self.assertEqual(120, report["recovery_hint"]["retry_after_seconds"])
+
     def test_cli_json_omits_recovery_hint_when_images_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
