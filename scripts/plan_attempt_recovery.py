@@ -111,6 +111,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 30,
         "reason": "source upload was not accepted before submit",
     },
+    "upload_failed": {
+        "action": "retry",
+        "failure_category": "network",
+        "retryable": True,
+        "retry_after_seconds": 60,
+        "reason": "source upload failed before prompt submission",
+    },
     "send_failed": {
         "action": "retry",
         "failure_category": "network",

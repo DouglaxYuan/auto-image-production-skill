@@ -41,6 +41,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `moderation_blocked`
 - `quota_exhausted`
 - `upload_not_ready`
+- `upload_failed`
 - `send_failed`
 - `download_failed`
 - `generation_timeout`
