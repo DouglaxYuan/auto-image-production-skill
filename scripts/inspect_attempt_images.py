@@ -85,7 +85,7 @@ def _string_list(value: Any) -> list[str]:
 
 
 def _normalized_mark(value: str) -> str:
-    separated = re.sub(r"[_-]+", " ", value)
+    separated = re.sub(r"[_\-\u2010-\u2015]+", " ", value)
     return " ".join(separated.split()).casefold()
 
 

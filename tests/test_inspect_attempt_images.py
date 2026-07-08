@@ -196,6 +196,22 @@ class InspectAttemptImagesTest(unittest.TestCase):
             result.stderr,
         )
 
+    def test_cli_normalizes_forbidden_visible_mark_unicode_dashes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["visible_marks"] = ["Doubao\u2011AI\u2011Generated"]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "candidate 1 contains forbidden visible mark: doubao_ai_generated",
+            result.stderr,
+        )
+
     def test_cli_ignores_blank_forbidden_visible_mark_entries(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
