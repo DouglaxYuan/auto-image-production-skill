@@ -4,6 +4,15 @@
 
 The skill is provider-agnostic. Browser-based image tools and API image models can all be used if they can return candidates that are bound to the current task.
 
+## Documentation
+
+- [Prompt and output contract](references/prompt-and-output-contract.md)
+- [Neutral asset example](references/asset-example.md)
+- [Changelog](CHANGELOG.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Version comparison, zh-CN](docs/version-comparison.zh-CN.md)
+
 ## What It Does
 
 The skill guides an agent through this flow:
@@ -201,6 +210,20 @@ attempts should pass manifest validation but fail image inspection.
 - 不要用部分导出的 registry 覆盖生产 registry。
 - 不要在公开仓库提交真实客户数据、账号信息、cookie、token、本机绝对路径或未脱敏的业务批次状态。
 
+## Public Repository Safety
+
+This repository is designed to be public-safe. Keep examples neutral, avoid real
+customer assets, and do not commit provider cookies, account state, API keys,
+local browser profiles, or machine-specific run logs. Public examples should use
+synthetic item ids and generic provider names unless a provider integration is
+documented without private account data.
+
+## License
+
+No open-source license has been selected in this repository yet. The repository
+can be reviewed publicly, but reuse and redistribution rights should be confirmed
+by the repository owner before a license file is added.
+
 ## Files
 
 - `SKILL.md`: skill trigger metadata and core workflow
@@ -209,4 +232,5 @@ attempts should pass manifest validation but fail image inspection.
 - `scripts/validate_attempt.py`: local attempt manifest validator
 - `scripts/inspect_attempt_images.py`: downloaded candidate image quality gate
 - `scripts/plan_attempt_recovery.py`: failed-attempt retry/backoff/human-action planner
+- `tests/`: unit tests for manifest validation, image inspection, and recovery planning
 - `agents/openai.yaml`: UI metadata for Codex
