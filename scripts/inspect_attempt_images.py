@@ -75,6 +75,10 @@ def _string_list(value: Any) -> list[str]:
     return [item for item in value if isinstance(item, str)]
 
 
+def _normalized_mark(value: str) -> str:
+    return value.strip().casefold()
+
+
 def _candidate_has_ocr_evidence(candidate: dict[str, Any]) -> bool:
     return isinstance(candidate.get("ocr_status"), str) or isinstance(candidate.get("ocr_text"), str)
 
@@ -104,9 +108,9 @@ def _validate_candidate_ocr(
 def _validate_candidate_marks(
     index: int, candidate: dict[str, Any], rules: dict[str, Any], errors: list[str]
 ) -> None:
-    marks = set(_string_list(candidate.get("visible_marks")))
+    marks = {_normalized_mark(mark) for mark in _string_list(candidate.get("visible_marks"))}
     for forbidden in _string_list(rules.get("forbidden_visible_marks")):
-        if forbidden in marks:
+        if _normalized_mark(forbidden) in marks:
             errors.append(f"candidate {index} contains forbidden visible mark: {forbidden}")
 
 

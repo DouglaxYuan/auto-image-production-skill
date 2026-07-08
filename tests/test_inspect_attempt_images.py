@@ -119,6 +119,22 @@ class InspectAttemptImagesTest(unittest.TestCase):
             result.stderr,
         )
 
+    def test_cli_matches_forbidden_visible_mark_case_insensitively(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["candidates"][0]["visible_marks"] = [" DouBao_AI_Generated "]
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "candidate 1 contains forbidden visible mark: doubao_ai_generated",
+            result.stderr,
+        )
+
     def test_cli_rejects_missing_required_ocr_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
