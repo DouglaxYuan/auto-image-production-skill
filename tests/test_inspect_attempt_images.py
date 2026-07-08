@@ -361,6 +361,27 @@ class InspectAttemptImagesTest(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertEqual("forbidden_ocr_text", report["suggested_error_code"])
 
+    def test_cli_json_sanitizes_unsafe_characters_in_report_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["forbidden_ocr_text"] = ["brand\nname"]
+            data["candidates"][0]["ocr_status"] = "passed"
+            data["candidates"][0]["ocr_text"] = "brand name"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script("--json", manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        self.assertNotIn("brand\\nname", result.stdout)
+        report = json.loads(result.stdout)
+        self.assertEqual("forbidden_ocr_text", report["suggested_error_code"])
+        self.assertTrue(all("\n" not in error for error in report["errors"]))
+        self.assertIn("brand name", report["errors"][0])
+        self.assertNotIn("\n", report["failed_attempt_patch"]["error_detail"])
+
     def test_cli_json_reports_suggested_failure_code_for_ocr_status_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

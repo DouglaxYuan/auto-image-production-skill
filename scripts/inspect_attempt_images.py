@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -141,8 +142,21 @@ def _redact_local_paths(value: str) -> str:
     return ABSOLUTE_PATH_PATTERN.sub("<path>", value)
 
 
+def _replace_unsafe_display_characters(value: str) -> str:
+    return "".join(
+        " " if unicodedata.category(character) in {"Cc", "Cf", "Cs"} else character
+        for character in value
+    )
+
+
+def _safe_report_error_value(value: str) -> str:
+    redacted = _redact_local_paths(value)
+    safe_value = _replace_unsafe_display_characters(redacted)
+    return " ".join(safe_value.split())
+
+
 def _report_errors(errors: list[str]) -> list[str]:
-    return [_redact_local_paths(error) for error in errors]
+    return [_safe_report_error_value(error) for error in errors]
 
 
 def _recovery_hint(errors: list[str]) -> dict[str, Any] | None:
