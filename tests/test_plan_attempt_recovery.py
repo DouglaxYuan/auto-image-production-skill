@@ -104,6 +104,17 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual("Network-Error", plan["error_code"])
         self.assertEqual("network", plan["failure_category"])
 
+    def test_cli_reports_normalized_error_code_for_failed_attempts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "Network-Error"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("Network-Error", plan["error_code"])
+        self.assertEqual("network_error", plan["normalized_error_code"])
+
     def test_cli_marks_network_retry_as_not_requiring_operator(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

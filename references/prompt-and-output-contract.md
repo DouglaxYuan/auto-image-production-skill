@@ -89,7 +89,8 @@ interactive verification and logged-out sessions to `needs_human`, transient
 network and timeout failures to `retry`, model concurrency pressure to
 `backoff`, and quality/provider mark failures to reroute or quarantine actions.
 The planner normalizes error-code whitespace or hyphen separators for policy
-lookup while preserving the original `error_code` in the returned plan.
+lookup while preserving the original `error_code` in the returned plan; failed
+plans also include `normalized_error_code` for scheduler diagnostics.
 For retryable failures, increment a numeric `retry_count`; when it reaches
 `--max-retries`, the planner returns `review_failure` instead of another retry.
 `--max-retries` must be a positive integer. Retryable plans include

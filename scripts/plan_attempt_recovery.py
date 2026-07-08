@@ -199,7 +199,9 @@ def plan_attempt_recovery(
     plan = _base_plan(data)
     if data.get("status") == "failed":
         error_code = data.get("error_code")
-        policy = POLICIES.get(_normalized_error_code(error_code))
+        normalized_error_code = _normalized_error_code(error_code)
+        plan["normalized_error_code"] = normalized_error_code
+        policy = POLICIES.get(normalized_error_code)
         if policy is None:
             plan.update(
                 {
