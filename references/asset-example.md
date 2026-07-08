@@ -33,6 +33,7 @@ Do not submit anything in `complete`, `skipped_source_blocked`, or `missing` wit
 - `login_required`
 - `concurrency_limited`
 - `rate_limited`
+- `provider_busy`
 - `network_error`
 - `page_load_failed`
 - `browser_crashed`

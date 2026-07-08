@@ -67,7 +67,7 @@ The validator checks manifest path/read errors, symlinked manifest files, attemp
 
 The image inspector checks downloaded candidate files after manifest validation. It fails when an attempt has no candidate images to inspect. It decodes images with Pillow, optionally enforces exact dimensions, rejects duplicate candidate bytes by SHA-256, and enforces recorded OCR/visible-mark evidence. Use `quality_rules.require_ocr_evidence`, `quality_rules.reject_any_ocr_text`, `quality_rules.forbidden_ocr_text`, and `quality_rules.forbidden_visible_marks` with candidate fields such as `ocr_status`, `ocr_text`, and `visible_marks`. OCR status checks normalize whitespace or hyphen separators and match case-insensitively, and forbidden-text checks collapse whitespace before matching case-insensitively, but statuses that claim no text must not be paired with non-empty `ocr_text`. Visible-mark checks collapse whitespace and match case-insensitively so provider mark variants do not bypass rejection. Blank forbidden text or visible-mark entries are ignored after normalization.
 
-For provider interruptions such as CAPTCHA, quota, browser crashes, network errors, rate limits, or concurrency limits, write a failed attempt instead of abandoning local state:
+For provider interruptions such as CAPTCHA, quota, provider-busy responses, browser crashes, network errors, rate limits, or concurrency limits, write a failed attempt instead of abandoning local state:
 
 ```json
 {
@@ -86,7 +86,7 @@ For provider interruptions such as CAPTCHA, quota, browser crashes, network erro
 
 Then run `plan_attempt_recovery.py` to classify the next action. It should route
 interactive verification and login-required sessions to `needs_human`, transient
-browser crashes, page load, network, download, and timeout failures to `retry`, model rate limits and concurrency pressure to
+browser crashes, page load, network, download, and timeout failures to `retry`, provider-busy responses, model rate limits, and concurrency pressure to
 `backoff`, and quality/provider mark failures to reroute or quarantine actions.
 The planner normalizes error-code whitespace or hyphen separators for policy
 lookup while preserving the original `error_code` in the returned plan; failed

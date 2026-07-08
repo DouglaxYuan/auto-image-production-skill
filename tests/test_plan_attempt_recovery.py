@@ -103,6 +103,19 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
         self.assertEqual(True, plan["retryable"])
         self.assertEqual("capacity", plan["failure_category"])
 
+    def test_cli_classifies_provider_busy_as_backoff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            manifest_path = self.write_manifest(root, self.failed_manifest(root, "provider_busy"))
+
+            plan = self.run_and_load_plan(manifest_path)
+
+        self.assertEqual("backoff", plan["action"])
+        self.assertEqual(True, plan["retryable"])
+        self.assertEqual("capacity", plan["failure_category"])
+        self.assertEqual("schedule retry after retry_after_seconds", plan["next_command"])
+
     def test_cli_classifies_network_error_as_retry(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"

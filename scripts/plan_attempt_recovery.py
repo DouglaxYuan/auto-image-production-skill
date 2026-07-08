@@ -55,6 +55,13 @@ POLICIES: dict[str, dict[str, Any]] = {
         "retry_after_seconds": 300,
         "reason": "provider rate limit or HTTP 429 backpressure",
     },
+    "provider_busy": {
+        "action": "backoff",
+        "failure_category": "capacity",
+        "retryable": True,
+        "retry_after_seconds": 300,
+        "reason": "provider is busy or temporarily overloaded",
+    },
     "quota_exhausted": {
         "action": "backoff",
         "failure_category": "capacity",
