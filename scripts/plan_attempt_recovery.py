@@ -136,6 +136,13 @@ def _remaining_retries(data: dict[str, Any], max_retries: int) -> int:
     return max(max_retries - retry_count, 0)
 
 
+def _next_retry_count(data: dict[str, Any]) -> int:
+    retry_count = data.get("retry_count", 0)
+    if not isinstance(retry_count, int) or isinstance(retry_count, bool):
+        return 1
+    return retry_count + 1
+
+
 def _retry_after_seconds(policy: dict[str, Any], data: dict[str, Any]) -> Any:
     retry_after = policy.get("retry_after_seconds")
     retry_count = data.get("retry_count", 0)
@@ -185,8 +192,11 @@ def plan_attempt_recovery(
             plan.update(policy)
             plan["next_command"] = _next_command_for_action(plan.get("action"))
             if policy.get("retryable"):
+                remaining_retries = _remaining_retries(data, max_retries)
                 plan["max_retries"] = max_retries
-                plan["remaining_retries"] = _remaining_retries(data, max_retries)
+                plan["remaining_retries"] = remaining_retries
+                if remaining_retries > 0:
+                    plan["next_retry_count"] = _next_retry_count(data)
                 plan["retry_after_seconds"] = _retry_after_seconds(policy, data)
             if policy.get("retryable") and _retry_budget_exhausted(data, max_retries):
                 plan.update(

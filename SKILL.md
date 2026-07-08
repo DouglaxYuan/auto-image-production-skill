@@ -114,7 +114,8 @@ human-intervention, quarantine, or reroute actions. Use
 `inspect_attempt_images.py` only after candidate files have been downloaded; a
 failed zero-candidate attempt should stay recorded but should not pass image
 inspection. For retryable failures, respect the returned `retry_after_seconds`;
-it increases with `retry_count` and is capped at one hour.
+it increases with `retry_count` and is capped at one hour. Use
+`next_retry_count` when writing the next retry manifest.
 
 ## Hard Stops
 

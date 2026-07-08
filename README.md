@@ -117,9 +117,10 @@ collapsing into the same interrupted state. For retryable failures, record a
 non-negative integer `retry_count`; when it reaches `--max-retries`, the planner
 escalates to `review_failure` instead of looping forever. `--max-retries` must
 be a positive integer. Retryable plans include `remaining_retries` so schedulers
-can decide whether to retry, back off, or escalate, and `max_retries` so logs
-show the configured budget. `retry_after_seconds` grows with `retry_count` and
-is capped at one hour, so repeated network or queue failures do not retry in a
+can decide whether to retry, back off, or escalate, `max_retries` so logs show
+the configured budget, and `next_retry_count` so the next attempt records the
+incremented counter. `retry_after_seconds` grows with `retry_count` and is
+capped at one hour, so repeated network or queue failures do not retry in a
 tight loop. The `next_command` field is action-specific, for example `request
 human intervention` for CAPTCHA or logged out sessions.
 
