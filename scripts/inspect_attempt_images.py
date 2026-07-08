@@ -91,6 +91,10 @@ def _validate_candidate_ocr(
 
     ocr_text = candidate.get("ocr_text")
     if isinstance(ocr_text, str):
+        if rules.get("reject_any_ocr_text") and ocr_text.strip():
+            errors.append(
+                f"candidate {index} contains OCR text while reject_any_ocr_text is enabled"
+            )
         normalized_text = ocr_text.casefold()
         for forbidden in _string_list(rules.get("forbidden_ocr_text")):
             if forbidden.casefold() in normalized_text:

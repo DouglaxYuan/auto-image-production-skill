@@ -14,7 +14,7 @@ Use this contract for automated image-production workflows.
 - `validation_rules`: checks required before accepting candidates.
 - `selection_criteria`: how to choose the final image.
 - `commit_target`: final output path, filename pattern, manifest/registry destination.
-- `quality_rules`: optional local gates for downloaded files, such as required OCR evidence, forbidden OCR text, or forbidden visible marks recorded by the provider adapter/OCR step.
+- `quality_rules`: optional local gates for downloaded files, such as required OCR evidence, reject-any-text OCR policy, forbidden OCR text, or forbidden visible marks recorded by the provider adapter/OCR step.
 - `status`, `error_code`, and `error_detail`: required in an attempt manifest when the provider fails before usable candidates are downloaded.
 - `retry_count`: optional non-negative integer for retryable failed attempts.
 
@@ -65,7 +65,7 @@ python scripts/inspect_attempt_images.py --require-size 2048x2048 ITEM/.attempts
 
 The validator checks manifest path/read errors, symlinked manifest files, attempt collection directories, and attempt directories, invalid JSON/UTF-8/deep nesting, required fields, non-empty core identity fields, display-safe identity fields with no leading/trailing whitespace, control characters, Unicode format characters, or surrogate characters, `item_id` consistency with `ITEM/.attempts/ATTEMPT_ID/` or `ITEM/attempts/ATTEMPT_ID/` layouts, `attempt_id` consistency with the attempt directory name, `candidate_count`, failed zero-candidate attempts with required `error_code` and `error_detail`, `result_binding` task-id references in nested metadata keys or values, overly deep `result_binding` metadata, invalid or non-relative candidate file paths, parent-directory references, canonical forward-slash artifact path formatting with no control characters, Unicode format characters, surrogate characters, or Unicode path separator lookalikes, artifact symlinks, symlinked artifact directories, candidate path containment inside the attempt directory, duplicate candidate paths, candidate task ids, and normalized relative `selected_path` validity and membership. Use `--require-selected` for publish-time checks that must fail until the selected candidate is recorded. It does not replace image decoding, OCR, perceptual hashing, or project-specific quality checks.
 
-The image inspector checks downloaded candidate files after manifest validation. It fails when an attempt has no candidate images to inspect. It decodes images with Pillow, optionally enforces exact dimensions, rejects duplicate candidate bytes by SHA-256, and enforces recorded OCR/visible-mark evidence. Use `quality_rules.require_ocr_evidence`, `quality_rules.forbidden_ocr_text`, and `quality_rules.forbidden_visible_marks` with candidate fields such as `ocr_status`, `ocr_text`, and `visible_marks`.
+The image inspector checks downloaded candidate files after manifest validation. It fails when an attempt has no candidate images to inspect. It decodes images with Pillow, optionally enforces exact dimensions, rejects duplicate candidate bytes by SHA-256, and enforces recorded OCR/visible-mark evidence. Use `quality_rules.require_ocr_evidence`, `quality_rules.reject_any_ocr_text`, `quality_rules.forbidden_ocr_text`, and `quality_rules.forbidden_visible_marks` with candidate fields such as `ocr_status`, `ocr_text`, and `visible_marks`.
 
 For provider interruptions such as CAPTCHA, quota, network errors, or concurrency limits, write a failed attempt instead of abandoning local state:
 

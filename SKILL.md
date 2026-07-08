@@ -31,7 +31,7 @@ Treat each requested output as one stable item. The reusable contract is:
 - `provider`: a third-party image model, browser tool, or API adapter.
 - `candidate_count`: expected number of returned candidates.
 - `result_binding`: how to prove returned images belong to this attempt.
-- `validation_rules`: size, format, OCR/text, duplicate, safety, and project-specific checks.
+- `validation_rules`: size, format, OCR/text including reject-any-text gates, duplicate, safety, and project-specific checks.
 - `selection_criteria`: how to pick the final image from candidates.
 - `commit_target`: final directory, manifest, registry, and exported selected-image name.
 

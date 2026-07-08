@@ -132,6 +132,23 @@ class InspectAttemptImagesTest(unittest.TestCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("candidate 1 missing OCR evidence", result.stderr)
 
+    def test_cli_rejects_any_ocr_text_when_rule_requires_text_absence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "A-0001-001"
+            root.mkdir()
+            data = self.valid_manifest(root)
+            data["quality_rules"]["reject_any_ocr_text"] = True
+            data["candidates"][0]["ocr_text"] = "SALE"
+            manifest_path = self.write_manifest(root, data)
+
+            result = self.run_script(manifest_path)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "candidate 1 contains OCR text while reject_any_ocr_text is enabled",
+            result.stderr,
+        )
+
     def test_cli_rejects_failed_attempt_without_candidate_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "A-0001-001"
