@@ -111,8 +111,13 @@ def _suggested_error_code(errors: list[str]) -> str | None:
     return "candidate_validation_failed"
 
 
-def _inspection_report(errors: list[str]) -> dict[str, Any]:
+def _inspection_report(errors: list[str], data: dict[str, Any] | None = None) -> dict[str, Any]:
+    data = data or {}
     return {
+        "item_id": data.get("item_id"),
+        "attempt_id": data.get("attempt_id"),
+        "task_id": data.get("task_id"),
+        "provider": data.get("provider"),
         "status": "failed" if errors else "passed",
         "suggested_error_code": _suggested_error_code(errors),
         "errors": errors,
@@ -232,7 +237,8 @@ def main(argv: list[str] | None = None) -> int:
 
     errors = inspect_attempt_images(args.manifest, required_size=args.require_size)
     if args.json:
-        print(json.dumps(_inspection_report(errors), ensure_ascii=False, sort_keys=True))
+        data = _load_json(Path(args.manifest))
+        print(json.dumps(_inspection_report(errors, data), ensure_ascii=False, sort_keys=True))
         return 1 if errors else 0
 
     if errors:

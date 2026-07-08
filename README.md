@@ -159,8 +159,9 @@ collapse whitespace before matching case-insensitively,
 but statuses that claim no text must not include non-empty `ocr_text`.
 Visible-mark checks collapse whitespace and match case-insensitively.
 Blank forbidden text or visible-mark entries are ignored after normalization.
-With `--json`, the inspector writes `status`, `errors`, and `suggested_error_code`
-to stdout so schedulers can persist failures such as `forbidden_visible_mark`,
+With `--json`, the inspector writes `item_id`, `attempt_id`, `task_id`,
+`provider`, `status`, `errors`, and `suggested_error_code` to stdout so
+schedulers can persist failures such as `forbidden_visible_mark`,
 `forbidden_ocr_text`, `missing_ocr_evidence`, `ocr_text_detected`,
 `ocr_status_failed`, `no_candidates_found`, or `candidate_validation_failed`
 before invoking the recovery planner.
