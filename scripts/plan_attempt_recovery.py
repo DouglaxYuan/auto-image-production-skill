@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,7 @@ from scripts.validate_attempt import validate_manifest  # noqa: E402
 
 
 MAX_RETRY_AFTER_SECONDS = 3600
+ABSOLUTE_PATH_PATTERN = re.compile(r"(?<![\w<])/(?:[^\s;:(),]+/?)+")
 
 
 POLICIES: dict[str, dict[str, Any]] = {
@@ -241,6 +243,35 @@ def _base_plan(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _redact_local_paths(value: str) -> str:
+    return ABSOLUTE_PATH_PATTERN.sub("<path>", value)
+
+
+def _report_errors(errors: list[str]) -> list[str]:
+    return [_redact_local_paths(error) for error in errors]
+
+
+def _validation_error_plan(errors: list[str]) -> dict[str, Any]:
+    policy = POLICIES["attempt_manifest_invalid"]
+    action = policy["action"]
+    return {
+        "item_id": None,
+        "attempt_id": None,
+        "task_id": None,
+        "status": "failed",
+        "error_code": "attempt_manifest_invalid",
+        "normalized_error_code": "attempt_manifest_invalid",
+        "action": action,
+        "failure_category": policy["failure_category"],
+        "retryable": policy["retryable"],
+        "retry_after_seconds": policy["retry_after_seconds"],
+        "requires_operator": _requires_operator(action),
+        "reason": policy["reason"],
+        "next_command": _next_command_for_action(action),
+        "errors": _report_errors(errors),
+    }
+
+
 def _retry_budget_exhausted(data: dict[str, Any], max_retries: int) -> bool:
     retry_count = data.get("retry_count", 0)
     return isinstance(retry_count, int) and not isinstance(retry_count, bool) and retry_count >= max_retries
@@ -366,6 +397,11 @@ def main(argv: list[str] | None = None) -> int:
         default=3,
         help="Maximum retry_count allowed before escalating retryable failures.",
     )
+    parser.add_argument(
+        "--json-errors",
+        action="store_true",
+        help="Write validation/load failures as a machine-readable JSON plan to stdout.",
+    )
     parser.add_argument("manifest", help="Path to attempt manifest JSON")
     args = parser.parse_args(argv)
 
@@ -376,6 +412,9 @@ def main(argv: list[str] | None = None) -> int:
         plan = None
 
     if errors:
+        if args.json_errors:
+            print(json.dumps(_validation_error_plan(errors), ensure_ascii=False, sort_keys=True))
+            return 1
         for error in errors:
             print(error, file=sys.stderr)
         return 1

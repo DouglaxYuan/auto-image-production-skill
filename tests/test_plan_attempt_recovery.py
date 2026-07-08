@@ -504,3 +504,20 @@ class PlanAttemptRecoveryTest(unittest.TestCase):
 
         self.assertEqual(2, result.returncode)
         self.assertIn("--max-retries must be a positive integer", result.stderr)
+
+    def test_cli_json_errors_reports_validation_failures_without_absolute_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_manifest = Path(tmp) / "private" / "A-0001-001" / "attempt.json"
+
+            result = self.run_script("--json-errors", missing_manifest)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stderr.strip())
+        plan = json.loads(result.stdout)
+        plan_text = json.dumps(plan)
+        self.assertEqual("review_failure", plan["action"])
+        self.assertEqual("automation_contract", plan["failure_category"])
+        self.assertEqual("attempt_manifest_invalid", plan["error_code"])
+        self.assertEqual(True, plan["requires_operator"])
+        self.assertIn("<path>", plan_text)
+        self.assertNotIn(str(missing_manifest), plan_text)

@@ -105,7 +105,10 @@ automation-contract failures such as missing provider UI selectors or invalid
 attempt bookkeeping.
 `requires_operator` marks plans that must leave the automation loop for a human
 decision. `next_command` is action-specific so a scheduler can tell human
-intervention apart from retry and reroute actions.
+intervention apart from retry and reroute actions. Use `--json-errors` when the
+scheduler needs invalid or unreadable manifests returned as a structured
+`review_failure` plan; local absolute paths in that report are redacted as
+`<path>`.
 
 ## Result Validation
 

@@ -131,7 +131,10 @@ for example `network`, `capacity`, `human_intervention`, `automation_contract`, 
 `compliance`. `requires_operator` marks plans that must leave the automation
 loop for a human decision, such as CAPTCHA, moderation, or exhausted retry
 budgets. The `next_command` field is action-specific, for example `request
-human intervention` for CAPTCHA or logged out sessions.
+human intervention` for CAPTCHA or logged out sessions. Use `--json-errors`
+when a scheduler also needs invalid or unreadable manifests returned as a
+machine-readable `review_failure` plan; local absolute paths in that report are
+redacted as `<path>`.
 
 Before publishing a successful attempt, also require the manifest to name the selected candidate:
 
