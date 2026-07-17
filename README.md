@@ -1,4 +1,38 @@
-# Auto Image Production
+# 自动图片生产 Skill / Auto Image Production
+
+> 让 Codex 按明确的素材、提示词、验收和落盘规则生成图片，并保留每次候选、校验与选择的可审计记录。
+
+- **仓库状态**：上游 fork，用于跟踪和试用
+- **最后核对**：2026-07-18
+- **上游项目**：[lightbulingling/auto-image-production-skill](https://github.com/lightbulingling/auto-image-production-skill)
+
+## 中文说明
+
+这个仓库不是通用“画图软件”，而是一套给 Codex 使用的图片生产流程。它要求每个任务都有唯一编号，把模型返回的候选图先放进暂存区，完成尺寸、解码、文字、重复内容和业务规则检查后，才把选中的图片发布到最终目录。
+
+### 适合谁使用
+
+- 需要批量生成商品图、内容配图或模板化素材，并希望每张图都能追溯来源与验收结果的人。
+- 同时使用浏览器图片工具和 API 模型，但不希望误拿历史图片或错误任务结果的 Agent 工作流。
+- 需要“生成多个候选 → 自动检查 → 明确选优 → 原子发布”固定流程的项目。
+
+不适合没有明确输入素材、输出尺寸、禁用内容和选择标准的临时随意生成。Skill 也不会替用户取得第三方模型权限、绕过平台限制或判断素材版权。
+
+### 工作链路
+
+```text
+任务规则与源素材
+  → 唯一 TASK-ID
+  → 第三方模型生成候选
+  → 暂存与任务绑定
+  → 尺寸/OCR/重复/业务校验
+  → 选择最佳候选
+  → 原子发布并保留记录
+```
+
+### Fork 说明
+
+本仓库保留上游项目结构和作者成果，当前只用于 Douglax 账号下的同步、中文入口与兼容性观察。核心工作流来自上游；除非提交记录和文档明确列出，不应把上游功能描述为本 fork 的原创改动。
 
 `auto-image-production` is a Codex skill for automated image-production workflows. It helps an agent turn user-provided output rules, prompts, source assets, third-party image models, validation rules, selection standards, and target paths into auditable final images.
 
@@ -24,7 +58,7 @@ Clone this repository into your Codex skills directory:
 
 ```bash
 mkdir -p ~/.codex/skills
-git clone https://github.com/lightbulingling/auto-image-production-skill.git ~/.codex/skills/auto-image-production
+git clone https://github.com/DouglaxYuan/auto-image-production-skill.git ~/.codex/skills/auto-image-production
 ```
 
 Then start a new Codex session and invoke:
@@ -32,6 +66,8 @@ Then start a new Codex session and invoke:
 ```text
 Use $auto-image-production ...
 ```
+
+如果希望始终使用原作者最新版本，请改为克隆上游仓库。安装成功的标志是新 Codex 会话能够识别 `$auto-image-production`，并在缺少必需输入时先要求补齐，而不是直接生成或写入最终目录。
 
 ## Required Inputs
 
